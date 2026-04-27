@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FPlayer FF Service Console</title>
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <header>
+      <h1>FPlayer FF Service Console</h1>
+      <p>用于管理流地址，支持 RTMP 推流与 HTTP-FLV 播放地址生成。</p>
+    </header>
+
+    <section class="panel">
+      <h2>创建流</h2>
+      <div class="row">
+        <label>服务启动状态</label>
+        <div id="startupStatus">启动中...</div>
+      </div>
+      <div class="row">
+        <label for="gatewayUrl">Gateway URL</label>
+        <div class="field-with-action">
+          <input id="gatewayUrl" value="" />
+          <button id="btnCopyGateway">复制</button>
+        </div>
+      </div>
+      <div class="row">
+        <label for="appName">App</label>
+        <div class="field-with-action">
+          <input id="appName" value="live" />
+          <button id="btnCopyApp">复制</button>
+        </div>
+      </div>
+      <div class="row">
+        <label for="streamName">Stream</label>
+        <div class="field-with-action">
+          <input id="streamName" value="stream001" />
+          <button id="btnCopyStream">复制</button>
+        </div>
+      </div>
+      <div class="row">
+        <label for="serviceMode">服务类型</label>
+        <select id="serviceMode">
+          <option value="direct">direct（直连占位）</option>
+          <option value="broadcast">broadcast（广播分发）</option>
+          <option value="httpflv" selected>httpflv（广播分发 + HTTP-FLV 优先）</option>
+        </select>
+      </div>
+      <div class="actions">
+        <button id="btnStart">创建并开始</button>
+        <button id="btnStopService" class="danger action-right">停止服务</button>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>当前流信息（用于调试）</h2>
+      <div id="result" class="result">尚未创建流。</div>
+      <div class="actions">
+        <button id="btnCopyRtmp" disabled>复制 RTMP 推流地址</button>
+        <button id="btnCopyFlv" disabled>复制 HTTP-FLV 播放地址</button>
+        <button id="btnQuery" disabled>查询状态</button>
+        <button id="btnStop" disabled>停止流</button>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>两端填写参考</h2>
+      <ul>
+        <li>推流端（desktop-服务端模式）：服务地址填 <code>run/runtime.json</code> 里的 <code>gateway.url</code>，app 与 stream 与本页创建流保持一致。</li>
+        <li>拉流端（desktop-服务端拉流）：服务地址同上，填写相同 app 与 stream，优先协议建议 HTTP-FLV。</li>
+        <li>若跨机器部署，请放行 <code>runtime.json</code> 中 gateway 端口及 RTMP/HTTP 端口。</li>
+      </ul>
+    </section>
+
+    <section class="panel">
+      <h2>日志监视</h2>
+      <div class="actions">
+        <button id="btnLogsRefresh">刷新日志</button>
+      </div>
+      <div class="row">
+        <label for="gatewayLogs">Gateway 日志</label>
+        <textarea id="gatewayLogs" class="logbox" readonly>暂无日志</textarea>
+      </div>
+      <div class="row">
+        <label for="gatewayErrLogs">Gateway 错误</label>
+        <textarea id="gatewayErrLogs" class="logbox" readonly>暂无日志</textarea>
+      </div>
+      <div class="row">
+        <label for="zlmLogs">ZLM 日志</label>
+        <textarea id="zlmLogs" class="logbox" readonly>暂无日志</textarea>
+      </div>
+      <div class="row">
+        <label for="uiErrLogs">UI 错误</label>
+        <textarea id="uiErrLogs" class="logbox" readonly>暂无日志</textarea>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>提示</h2>
+      <p>完整链路（服务端模式）是这样：</p>
+      <p>1) 推流端（desktop）先向 gateway 发 HTTP API 请求</p>
+      <p>类似 POST /api/v1/streams/start</p>
+      <p>这是“控制面”协议：HTTP/JSON（不是媒体流）</p>
+      <p>2) gateway 返回会话信息</p>
+      <p>包括 publishRtmp、playHttpFlv、id 等</p>
+      <p>这里已经把“该推到哪、该拉哪个流”编排好了</p>
+      <p>3) 推流端再把媒体流推到 publishRtmp</p>
+      <p>这一段是“数据面”协议：RTMP</p>
+      <p>也就是编码后音视频真正上传到服务端的通道</p>
+      <p>4) 拉流端按需要拉取播放地址</p>
+      <p>常见是 playHttpFlv（HTTP-FLV），也可用 RTMP/WebRTC（看服务端配置和客户端能力）</p>
+      <p>这一段是服务端分发给观众/播放器的协议</p>
+      <p>此 UI 仅管理地址与状态，媒体分发由 service 内置 ZLMediaKit 内核承担。</p>
+    </section>
+
+    <script src="./app.js"></script>
+  </body>
+</html>

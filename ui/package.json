@@ -1,0 +1,45 @@
+{
+  "name": "fplayer-ff-service-ui",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Simple control panel for fplayer ff service",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "pack:dir": "electron-builder --dir",
+    "dist:win": "electron-builder --win portable"
+  },
+  "devDependencies": {
+    "electron": "^31.0.0",
+    "electron-builder": "^24.13.3"
+  },
+  "build": {
+    "appId": "com.fplayer.ffservice",
+    "productName": "FPlayerFFService",
+    "files": [
+      "main.js",
+      "preload.js",
+      "renderer/**/*",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "../3rd",
+        "to": "3rd"
+      },
+      {
+        "from": "../scripts",
+        "to": "scripts"
+      },
+      {
+        "from": "../gateway/bin",
+        "to": "gateway/bin"
+      }
+    ],
+    "win": {
+      "target": [
+        "portable"
+      ]
+    }
+  }
+}

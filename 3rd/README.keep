@@ -1,0 +1,8 @@
+此目录用于存放运行时第三方依赖（例如 ZLMediaKit）。
+
+请勿清空或删除该目录，否则 service 将无法启动媒体分发能力。
+
+建议目录结构：
+- 3rd/zlm/windows/MediaServer.exe
+- 3rd/zlm/linux/MediaServer
+- 3rd/zlm/macos/MediaServer

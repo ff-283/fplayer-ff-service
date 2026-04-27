@@ -1,0 +1,13 @@
+/release/
+/ui/dist/
+/run/
+/logs/
+/gateway/bin/
+/ui/node_modules/
+/ui/.cache/
+/ui/.webpack/
+/ui/out/
+*.zip
+*.7z
+*.rar
+*.tmp

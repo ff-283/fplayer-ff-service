@@ -1,0 +1,14 @@
+version: "3.9"
+
+services:
+  srs:
+    image: ossrs/srs:5
+    container_name: fplayer-srs
+    ports:
+      - "1935:1935"
+      - "8080:8080"
+      - "1985:1985"
+    volumes:
+      - ./conf/srs.conf:/usr/local/srs/conf/srs.conf:ro
+    command: ["./objs/srs", "-c", "conf/srs.conf"]
+    restart: unless-stopped
