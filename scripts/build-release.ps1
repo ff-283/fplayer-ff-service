@@ -91,7 +91,12 @@ if (-not $installer) {
 }
 
 $targetInstaller = Join-Path $releaseDir $installer.Name
-Copy-Item -Path $installer.FullName -Destination $targetInstaller -Force
+try {
+  Copy-Item -Path $installer.FullName -Destination $targetInstaller -Force -ErrorAction Stop
+} catch {
+  Write-Warning "Failed to copy installer to release (file may be locked): $targetInstaller"
+  Write-Warning "Portable package will still be generated. Close file handles and retry if installer copy is required."
+}
 
 if (!(Test-PathSafe -PathValue $winUnpackedDir -PathName "winUnpackedDir")) {
   throw "win-unpacked directory not found: $winUnpackedDir"
@@ -109,17 +114,23 @@ Get-ChildItem -LiteralPath $winUnpackedDir -Force | ForEach-Object {
   Copy-Item -Path $_.FullName -Destination $portableDir -Recurse -Force
 }
 
-$source3rd = Join-Path $root "3rd"
-if (Test-PathSafe -PathValue $source3rd -PathName "source3rd") {
-  Copy-Item -Path $source3rd -Destination (Join-Path $portableDir "3rd") -Recurse -Force
-}
-# 兜底：若同级 3rd 缺失，则从 resources/3rd 回填到同级，保证 exe 同级可直接运行
 $portable3rd = Join-Path $portableDir "3rd"
-$resources3rd = Join-Path $portableDir "resources\3rd"
 Assert-PathString -Value $portable3rd -Name "portable3rd"
+Remove-DirectoryWithRetry -DirPath $portable3rd -DirName "portable3rd"
+New-Item -ItemType Directory -Force -Path $portable3rd | Out-Null
+
+$source3rd = Join-Path $root "3rd"
+$resources3rd = Join-Path $portableDir "resources\3rd"
+$portableZlmDir = Join-Path $portable3rd "zlm"
+Assert-PathString -Value $source3rd -Name "source3rd"
 Assert-PathString -Value $resources3rd -Name "resources3rd"
-if (!(Test-PathSafe -PathValue $portable3rd -PathName "portable3rd") -and (Test-PathSafe -PathValue $resources3rd -PathName "resources3rd")) {
-  Copy-Item -Path $resources3rd -Destination $portable3rd -Recurse -Force
+Assert-PathString -Value $portableZlmDir -Name "portableZlmDir"
+
+if (Test-PathSafe -PathValue $source3rd -PathName "source3rd") {
+  Get-ChildItem -LiteralPath $source3rd -Force | ForEach-Object { Copy-Item -Path $_.FullName -Destination $portable3rd -Recurse -Force }
+}
+if (!(Test-PathSafe -PathValue $portableZlmDir -PathName "portableZlmDir") -and (Test-PathSafe -PathValue $resources3rd -PathName "resources3rd")) {
+  Get-ChildItem -LiteralPath $resources3rd -Force | ForEach-Object { Copy-Item -Path $_.FullName -Destination $portable3rd -Recurse -Force }
 }
 New-Item -ItemType Directory -Force -Path (Join-Path $portableDir "gateway\bin") | Out-Null
 Copy-Item -Path $gatewayExe -Destination (Join-Path $portableDir "gateway\bin\gateway.exe") -Force

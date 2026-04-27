@@ -11,6 +11,7 @@
       <h1>FPlayer FF Service Console</h1>
       <p>用于管理流地址，支持 RTMP 推流与 HTTP-FLV 播放地址生成。</p>
     </header>
+    <div id="copyToast" class="copy-toast" aria-live="polite"></div>
 
     <section class="panel">
       <h2>创建流</h2>
@@ -42,9 +43,9 @@
       <div class="row">
         <label for="serviceMode">服务类型</label>
         <select id="serviceMode">
-          <option value="direct">direct（直连占位）</option>
-          <option value="broadcast">broadcast（广播分发）</option>
-          <option value="httpflv" selected>httpflv（广播分发 + HTTP-FLV 优先）</option>
+          <option value="direct">direct（直连占位，通常不用于分发）</option>
+          <option value="broadcast">broadcast（广播分发：RTMP + FLV + HLS）</option>
+          <option value="httpflv" selected>httpflv（广播分发 + HTTP-FLV 优先，含 HLS）</option>
         </select>
       </div>
       <div class="actions">
@@ -56,9 +57,42 @@
     <section class="panel">
       <h2>当前流信息（用于调试）</h2>
       <div id="result" class="result">尚未创建流。</div>
+      <div class="row">
+        <label for="currentPublishRtmp">RTMP 推流地址</label>
+        <div class="field-with-action">
+          <input id="currentPublishRtmp" value="" readonly placeholder="创建流后自动显示 publishRtmp" />
+          <button id="btnCopyRtmp" disabled>复制</button>
+        </div>
+      </div>
+      <div class="row">
+        <label for="currentPlayHttpFlv">HTTP-FLV 播放地址</label>
+        <div class="field-with-action">
+          <input id="currentPlayHttpFlv" value="" readonly placeholder="创建流后自动显示 playHttpFlv" />
+          <button id="btnCopyFlv" disabled>复制</button>
+        </div>
+      </div>
+      <div class="row">
+        <label for="currentPlayHls">HLS 播放地址</label>
+        <div class="field-with-action">
+          <input id="currentPlayHls" value="" readonly placeholder="创建流后自动显示 playHls" />
+          <button id="btnCopyHls" disabled>复制</button>
+        </div>
+      </div>
+      <div class="row">
+        <label for="mobilePlayProtocol">mobile 协议</label>
+        <select id="mobilePlayProtocol">
+          <option value="hls">HLS</option>
+          <option value="httpFlv" selected>HTTP-FLV</option>
+        </select>
+      </div>
+      <div class="row">
+        <label for="mobilePlayUrl">mobile 拉流地址</label>
+        <div class="field-with-action">
+          <input id="mobilePlayUrl" value="" readonly placeholder="按所选协议自动显示播放地址" />
+          <button id="btnCopyMobilePlay" disabled>复制</button>
+        </div>
+      </div>
       <div class="actions">
-        <button id="btnCopyRtmp" disabled>复制 RTMP 推流地址</button>
-        <button id="btnCopyFlv" disabled>复制 HTTP-FLV 播放地址</button>
         <button id="btnQuery" disabled>查询状态</button>
         <button id="btnStop" disabled>停止流</button>
       </div>

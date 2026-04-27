@@ -49,6 +49,7 @@ type startResponse struct {
 	ServiceMode string `json:"serviceMode"`
 	PublishRTMP string `json:"publishRtmp"`
 	PlayHTTPFLV string `json:"playHttpFlv"`
+	PlayHLS     string `json:"playHls"`
 	PlayURLs    map[string]string `json:"playUrls"`
 }
 
@@ -60,6 +61,7 @@ type statusResponse struct {
 	Status      streamStatus `json:"status"`
 	PublishRTMP string      `json:"publishRtmp"`
 	PlayHTTPFLV string      `json:"playHttpFlv"`
+	PlayHLS     string      `json:"playHls"`
 	PlayURLs    map[string]string `json:"playUrls"`
 	PublisherMeta map[string]any `json:"publisherMeta,omitempty"`
 	SourceMeta map[string]any `json:"sourceMeta,omitempty"`
@@ -151,6 +153,7 @@ func startHandler(w http.ResponseWriter, r *http.Request) {
 		ServiceMode: rec.ServiceMode,
 		PublishRTMP: "rtmp://" + host + ":" + strconv.Itoa(rtmpPort) + "/" + rec.App + "/" + rec.Stream,
 		PlayHTTPFLV: rec.PlayURLs["httpFlv"],
+		PlayHLS:     rec.PlayURLs["hls"],
 		PlayURLs:    rec.PlayURLs,
 	}
 	writeJSON(w, http.StatusOK, resp)
@@ -220,6 +223,7 @@ func statusHandler(w http.ResponseWriter, r *http.Request, id string) {
 		Status:        rec.Status,
 		PublishRTMP:   "rtmp://" + host + ":" + strconv.Itoa(rtmpPort) + "/" + rec.App + "/" + rec.Stream,
 		PlayHTTPFLV:   playUrls["httpFlv"],
+		PlayHLS:       playUrls["hls"],
 		PlayURLs:      playUrls,
 		PublisherMeta: rec.PublisherMeta,
 		SourceMeta:    rec.SourceMeta,
@@ -279,6 +283,7 @@ func resolveHandler(w http.ResponseWriter, r *http.Request) {
 		Status:        target.Status,
 		PublishRTMP:   "rtmp://" + host + ":" + strconv.Itoa(rtmpPort) + "/" + target.App + "/" + target.Stream,
 		PlayHTTPFLV:   playUrls["httpFlv"],
+		PlayHLS:       playUrls["hls"],
 		PlayURLs:      playUrls,
 		PublisherMeta: target.PublisherMeta,
 		SourceMeta:    target.SourceMeta,
@@ -360,6 +365,7 @@ func buildPlayURLs(host, app, stream, mode string) map[string]string {
 	}
 	if mode == "httpflv" || mode == "broadcast" {
 		urls["httpFlv"] = "http://" + host + ":" + strconv.Itoa(httpPort) + "/" + app + "/" + stream + ".flv"
+		urls["hls"] = "http://" + host + ":" + strconv.Itoa(httpPort) + "/" + app + "/" + stream + "/hls.m3u8"
 	}
 	return urls
 }
