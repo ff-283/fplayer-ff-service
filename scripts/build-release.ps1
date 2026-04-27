@@ -20,6 +20,52 @@ function Test-PathSafe {
   return Test-Path -LiteralPath $PathValue
 }
 
+function Stop-ReleaseProcesses {
+  param(
+    [Parameter(Mandatory = $true)][string]$ReleaseRoot
+  )
+  Assert-PathString -Value $ReleaseRoot -Name "ReleaseRoot"
+  $normalizedRoot = [System.IO.Path]::GetFullPath($ReleaseRoot)
+  Get-Process -ErrorAction SilentlyContinue | ForEach-Object {
+    try {
+      $procPath = $_.Path
+      if ([string]::IsNullOrWhiteSpace($procPath)) {
+        return
+      }
+      $fullProcPath = [System.IO.Path]::GetFullPath($procPath)
+      if ($fullProcPath.StartsWith($normalizedRoot, [System.StringComparison]::OrdinalIgnoreCase)) {
+        Stop-Process -Id $_.Id -Force -ErrorAction Stop
+      }
+    } catch {
+      # 忽略无权限/系统进程读取失败
+    }
+  }
+}
+
+function Remove-DirectoryWithRetry {
+  param(
+    [Parameter(Mandatory = $true)][string]$DirPath,
+    [Parameter(Mandatory = $true)][string]$DirName
+  )
+  if (!(Test-PathSafe -PathValue $DirPath -PathName $DirName)) {
+    return
+  }
+  $attempt = 0
+  while ($attempt -lt 3) {
+    try {
+      Remove-Item -LiteralPath $DirPath -Recurse -Force -ErrorAction Stop
+      return
+    } catch {
+      $attempt += 1
+      if ($attempt -ge 3) {
+        throw "Failed to remove '$DirPath'. It is likely locked by a running process. Please close apps using files under release and retry."
+      }
+      Stop-ReleaseProcesses -ReleaseRoot (Split-Path -Parent $DirPath)
+      Start-Sleep -Milliseconds (500 * $attempt)
+    }
+  }
+}
+
 $root = Split-Path -Parent (Split-Path -Parent $MyInvocation.MyCommand.Path)
 $uiDir = Join-Path $root "ui"
 $distDir = Join-Path $uiDir "dist"
@@ -52,15 +98,11 @@ if (!(Test-PathSafe -PathValue $winUnpackedDir -PathName "winUnpackedDir")) {
 }
 
 $packagedPortableDir = Join-Path $releaseDir "win-unpacked"
-if (Test-PathSafe -PathValue $packagedPortableDir -PathName "packagedPortableDir") {
-  Remove-Item -Recurse -Force $packagedPortableDir
-}
+Remove-DirectoryWithRetry -DirPath $packagedPortableDir -DirName "packagedPortableDir"
 Copy-Item -Path $winUnpackedDir -Destination $packagedPortableDir -Recurse -Force
 
 $portableDir = Join-Path $releaseDir "portable"
-if (Test-PathSafe -PathValue $portableDir -PathName "portableDir") {
-  Remove-Item -Recurse -Force $portableDir
-}
+Remove-DirectoryWithRetry -DirPath $portableDir -DirName "portableDir"
 # 便携包必须先完整复制 win-unpacked（包含 Electron 运行时 DLL，如 ffmpeg.dll）
 New-Item -ItemType Directory -Force -Path $portableDir | Out-Null
 Get-ChildItem -LiteralPath $winUnpackedDir -Force | ForEach-Object {
