@@ -1,4 +1,24 @@
 $ErrorActionPreference = "Stop"
+Set-StrictMode -Version Latest
+
+function Assert-PathString {
+  param(
+    [Parameter(Mandatory = $true)][string]$Value,
+    [Parameter(Mandatory = $true)][string]$Name
+  )
+  if ([string]::IsNullOrWhiteSpace($Value)) {
+    throw "Path variable '$Name' is empty."
+  }
+}
+
+function Test-PathSafe {
+  param(
+    [Parameter(Mandatory = $true)][string]$PathValue,
+    [Parameter(Mandatory = $true)][string]$PathName
+  )
+  Assert-PathString -Value $PathValue -Name $PathName
+  return Test-Path -LiteralPath $PathValue
+}
 
 $root = Split-Path -Parent (Split-Path -Parent $MyInvocation.MyCommand.Path)
 $uiDir = Join-Path $root "ui"
@@ -6,6 +26,12 @@ $distDir = Join-Path $uiDir "dist"
 $releaseDir = Join-Path $root "release"
 $winUnpackedDir = Join-Path $distDir "win-unpacked"
 $gatewayExe = Join-Path $root "gateway\bin\gateway.exe"
+Assert-PathString -Value $root -Name "root"
+Assert-PathString -Value $uiDir -Name "uiDir"
+Assert-PathString -Value $distDir -Name "distDir"
+Assert-PathString -Value $releaseDir -Name "releaseDir"
+Assert-PathString -Value $winUnpackedDir -Name "winUnpackedDir"
+Assert-PathString -Value $gatewayExe -Name "gatewayExe"
 
 Write-Host "Step 1/3: build installer ..."
 powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $root "scripts\build-win-package.ps1")
@@ -21,18 +47,18 @@ if (-not $installer) {
 $targetInstaller = Join-Path $releaseDir $installer.Name
 Copy-Item -Path $installer.FullName -Destination $targetInstaller -Force
 
-if (!(Test-Path $winUnpackedDir)) {
+if (!(Test-PathSafe -PathValue $winUnpackedDir -PathName "winUnpackedDir")) {
   throw "win-unpacked directory not found: $winUnpackedDir"
 }
 
 $packagedPortableDir = Join-Path $releaseDir "win-unpacked"
-if (Test-Path $packagedPortableDir) {
+if (Test-PathSafe -PathValue $packagedPortableDir -PathName "packagedPortableDir") {
   Remove-Item -Recurse -Force $packagedPortableDir
 }
 Copy-Item -Path $winUnpackedDir -Destination $packagedPortableDir -Recurse -Force
 
 $portableDir = Join-Path $releaseDir "portable"
-if (Test-Path $portableDir) {
+if (Test-PathSafe -PathValue $portableDir -PathName "portableDir") {
   Remove-Item -Recurse -Force $portableDir
 }
 # 便携包必须先完整复制 win-unpacked（包含 Electron 运行时 DLL，如 ffmpeg.dll）
@@ -42,13 +68,15 @@ Get-ChildItem -LiteralPath $winUnpackedDir -Force | ForEach-Object {
 }
 
 $source3rd = Join-Path $root "3rd"
-if (Test-Path $source3rd) {
+if (Test-PathSafe -PathValue $source3rd -PathName "source3rd") {
   Copy-Item -Path $source3rd -Destination (Join-Path $portableDir "3rd") -Recurse -Force
 }
 # 兜底：若同级 3rd 缺失，则从 resources/3rd 回填到同级，保证 exe 同级可直接运行
 $portable3rd = Join-Path $portableDir "3rd"
 $resources3rd = Join-Path $portableDir "resources\3rd"
-if (!(Test-Path $portable3rd) -and (Test-Path $resources3rd)) {
+Assert-PathString -Value $portable3rd -Name "portable3rd"
+Assert-PathString -Value $resources3rd -Name "resources3rd"
+if (!(Test-PathSafe -PathValue $portable3rd -PathName "portable3rd") -and (Test-PathSafe -PathValue $resources3rd -PathName "resources3rd")) {
   Copy-Item -Path $resources3rd -Destination $portable3rd -Recurse -Force
 }
 New-Item -ItemType Directory -Force -Path (Join-Path $portableDir "gateway\bin") | Out-Null
@@ -68,7 +96,7 @@ $requiredPaths = @(
   (Join-Path $portableDir "resources\app.asar")
 )
 foreach ($requiredPath in $requiredPaths) {
-  if (!(Test-Path $requiredPath)) {
+  if (!(Test-PathSafe -PathValue $requiredPath -PathName "requiredPath")) {
     throw "Release package missing required dependency: $requiredPath"
   }
 }
@@ -108,7 +136,7 @@ Write-Host "Packaged directory: $packagedPortableDir"
 Write-Host ""
 Write-Host "Portable checklist:"
 foreach ($requiredPath in $requiredPaths) {
-  $ok = Test-Path $requiredPath
+  $ok = Test-PathSafe -PathValue $requiredPath -PathName "requiredPath"
   $mark = if ($ok) { "[OK]" } else { "[MISSING]" }
   Write-Host "  $mark $requiredPath"
 }
