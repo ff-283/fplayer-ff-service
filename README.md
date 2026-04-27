@@ -1,5 +1,9 @@
 # fplayer-ff-service
 
+<p align="center">
+  <img src="./doc/img/icon.png" alt="fplayer-ff-service icon" width="180">
+</p>
+
 `fplayer-ff-service` 是独立部署的软件，内置 `ZLMediaKit` 作为媒体分发内核，并通过 `gateway` 向 desktop 提供会话编排接口。
 
 > 文档入口：

@@ -27,6 +27,10 @@ function getServiceRootDir() {
   return path.resolve(__dirname, "..");
 }
 
+function getAppIconPath() {
+  return path.join(getServiceRootDir(), "doc", "img", "icon.png");
+}
+
 function ensureDir(dirPath) {
   fs.mkdirSync(dirPath, { recursive: true });
 }
@@ -340,11 +344,13 @@ function readRuntimeGatewayUrl() {
 }
 
 function createWindow() {
+  const iconPath = getAppIconPath();
   const win = new BrowserWindow({
     width: 980,
     height: 720,
     minWidth: 860,
     minHeight: 640,
+    icon: fs.existsSync(iconPath) ? iconPath : undefined,
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
       contextIsolation: true,
@@ -396,6 +402,10 @@ ipcMain.handle("service:stopServiceCore", async () => {
 });
 
 app.whenReady().then(() => {
+  const iconPath = getAppIconPath();
+  if (fs.existsSync(iconPath)) {
+    app.setIcon(iconPath);
+  }
   coreStartupStatus = managedMode
     ? { state: "starting", message: "正在初始化服务..." }
     : { state: "ready", message: "当前为非托管模式。" };
