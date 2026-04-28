@@ -62,6 +62,12 @@ h2 {
   margin-bottom: 14px;
 }
 
+.warning-text {
+  margin: 0 0 10px;
+  color: #ef4444;
+  font-weight: 600;
+}
+
 .row {
   display: grid;
   grid-template-columns: 130px 1fr;
