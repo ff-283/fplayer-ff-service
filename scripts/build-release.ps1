@@ -31,84 +31,100 @@ if (Test-Path $packagedPortableDir) {
 }
 Copy-Item -Path $winUnpackedDir -Destination $packagedPortableDir -Recurse -Force
 
-$portableDir = Join-Path $releaseDir "portable"
-if (Test-Path $portableDir) {
-  Remove-Item -Recurse -Force $portableDir
+$portableBaseDir = Join-Path $releaseDir "_portable-base"
+if (Test-Path $portableBaseDir) {
+  Remove-Item -Recurse -Force $portableBaseDir
 }
-# 便携包必须先完整复制 win-unpacked（包含 Electron 运行时 DLL，如 ffmpeg.dll）
-New-Item -ItemType Directory -Force -Path $portableDir | Out-Null
+# 先复制一份基础目录（包含 Electron 运行时 DLL，如 ffmpeg.dll），再拆分 UI/Kernel 包
+New-Item -ItemType Directory -Force -Path $portableBaseDir | Out-Null
 Get-ChildItem -LiteralPath $winUnpackedDir -Force | ForEach-Object {
-  Copy-Item -Path $_.FullName -Destination $portableDir -Recurse -Force
+  Copy-Item -Path $_.FullName -Destination $portableBaseDir -Recurse -Force
+}
+
+$uiExePath = Join-Path $portableBaseDir "FPlayerFFService.exe"
+$kernelExePath = Join-Path $portableBaseDir "FPlayerFFServiceKernel.exe"
+if (Test-Path $uiExePath) {
+  Copy-Item -Path $uiExePath -Destination $kernelExePath -Force
+}
+
+$portableUiDir = Join-Path $releaseDir "portable-ui"
+$portableKernelDir = Join-Path $releaseDir "portable-kernel"
+if (Test-Path $portableUiDir) {
+  Remove-Item -Recurse -Force $portableUiDir
+}
+if (Test-Path $portableKernelDir) {
+  Remove-Item -Recurse -Force $portableKernelDir
 }
 
 $source3rd = Join-Path $root "3rd"
 if (Test-Path $source3rd) {
-  Copy-Item -Path $source3rd -Destination (Join-Path $portableDir "3rd") -Recurse -Force
+  Copy-Item -Path $source3rd -Destination (Join-Path $portableBaseDir "3rd") -Recurse -Force
 }
 # 兜底：若同级 3rd 缺失，则从 resources/3rd 回填到同级，保证 exe 同级可直接运行
-$portable3rd = Join-Path $portableDir "3rd"
-$resources3rd = Join-Path $portableDir "resources\3rd"
+$portable3rd = Join-Path $portableBaseDir "3rd"
+$resources3rd = Join-Path $portableBaseDir "resources\3rd"
 if (!(Test-Path $portable3rd) -and (Test-Path $resources3rd)) {
   Copy-Item -Path $resources3rd -Destination $portable3rd -Recurse -Force
 }
-New-Item -ItemType Directory -Force -Path (Join-Path $portableDir "gateway\bin") | Out-Null
-Copy-Item -Path $gatewayExe -Destination (Join-Path $portableDir "gateway\bin\gateway.exe") -Force
-Copy-Item -Path (Join-Path $root "scripts") -Destination (Join-Path $portableDir "scripts") -Recurse -Force
+New-Item -ItemType Directory -Force -Path (Join-Path $portableBaseDir "gateway\bin") | Out-Null
+Copy-Item -Path $gatewayExe -Destination (Join-Path $portableBaseDir "gateway\bin\gateway.exe") -Force
+Copy-Item -Path (Join-Path $root "scripts") -Destination (Join-Path $portableBaseDir "scripts") -Recurse -Force
 
-$requiredPaths = @(
-  (Join-Path $portableDir "FPlayerFFService.exe"),
-  (Join-Path $portableDir "ffmpeg.dll"),
-  (Join-Path $portableDir "3rd"),
-  (Join-Path $portableDir "3rd\zlm\windows"),
-  (Join-Path $portableDir "3rd\zlm\windows\MediaServer.exe"),
-  (Join-Path $portableDir "3rd\zlm\windows\config.ini"),
-  (Join-Path $portableDir "gateway\bin\gateway.exe"),
-  (Join-Path $portableDir "scripts\start-all.ps1"),
-  (Join-Path $portableDir "scripts\stop-all.ps1"),
-  (Join-Path $portableDir "resources\app.asar")
+Copy-Item -Path $portableBaseDir -Destination $portableUiDir -Recurse -Force
+Copy-Item -Path $portableBaseDir -Destination $portableKernelDir -Recurse -Force
+
+$portableUiKernelExe = Join-Path $portableUiDir "FPlayerFFServiceKernel.exe"
+if (Test-Path $portableUiKernelExe) {
+  Remove-Item -Force $portableUiKernelExe
+}
+$portableKernelUiExe = Join-Path $portableKernelDir "FPlayerFFService.exe"
+if (Test-Path $portableKernelUiExe) {
+  Remove-Item -Force $portableKernelUiExe
+}
+
+$requiredBasePaths = @(
+  (Join-Path $portableBaseDir "FPlayerFFService.exe"),
+  (Join-Path $portableBaseDir "FPlayerFFServiceKernel.exe"),
+  (Join-Path $portableBaseDir "ffmpeg.dll"),
+  (Join-Path $portableBaseDir "3rd"),
+  (Join-Path $portableBaseDir "3rd\zlm\windows"),
+  (Join-Path $portableBaseDir "3rd\zlm\windows\MediaServer.exe"),
+  (Join-Path $portableBaseDir "3rd\zlm\windows\config.ini"),
+  (Join-Path $portableBaseDir "gateway\bin\gateway.exe"),
+  (Join-Path $portableBaseDir "scripts\start-all.ps1"),
+  (Join-Path $portableBaseDir "scripts\stop-all.ps1"),
+  (Join-Path $portableBaseDir "resources\app.asar")
 )
-foreach ($requiredPath in $requiredPaths) {
-  if (!(Test-Path $requiredPath)) {
-    throw "Release package missing required dependency: $requiredPath"
+foreach ($requiredBasePath in $requiredBasePaths) {
+  if (!(Test-Path $requiredBasePath)) {
+    throw "Release package missing required dependency: $requiredBasePath"
   }
 }
 
-$readme = @"
-FPlayer FF Service Windows 发布包
-================================
-
-1. 双击安装程序:
-   $($installer.Name)
-
-2. 或直接运行便携版（推荐）:
-   portable\FPlayerFFService.exe
-   - 运行依赖按 exe 同级目录查找（3rd/gateway/scripts）
-   - 无需手动执行 start-service.bat / start-all.ps1
-
-3. 安装后首次运行:
-   - 若系统弹出防火墙提示，请允许访问
-   - 程序将自动拉起 service 内核
-
-4. 与 desktop 对接:
-   - desktop 服务地址填写:
-     http://<service-ip>:<gateway-port>
-
-5. 常见问题:
-   - 若启动失败，请检查 logs 目录日志
-   - 若端口冲突，程序会自动选择可用端口
-"@
-
-Set-Content -Path (Join-Path $releaseDir "README-发布说明.txt") -Value $readme -Encoding UTF8
+$requiredSplitPaths = @(
+  (Join-Path $portableUiDir "FPlayerFFService.exe"),
+  (Join-Path $portableKernelDir "FPlayerFFServiceKernel.exe")
+)
+foreach ($requiredSplitPath in $requiredSplitPaths) {
+  if (!(Test-Path $requiredSplitPath)) {
+    throw "Release package missing split artifact: $requiredSplitPath"
+  }
+}
 
 Write-Host "Step 3/3: done"
 Write-Host "Release directory: $releaseDir"
 Write-Host "Installer: $targetInstaller"
-Write-Host "Portable directory: $portableDir"
+Write-Host "Portable UI directory: $portableUiDir"
+Write-Host "Portable Kernel directory: $portableKernelDir"
 Write-Host "Packaged directory: $packagedPortableDir"
 Write-Host ""
-Write-Host "Portable checklist:"
-foreach ($requiredPath in $requiredPaths) {
-  $ok = Test-Path $requiredPath
+Write-Host "Portable split checklist:"
+foreach ($requiredSplitPath in $requiredSplitPaths) {
+  $ok = Test-Path $requiredSplitPath
   $mark = if ($ok) { "[OK]" } else { "[MISSING]" }
-  Write-Host "  $mark $requiredPath"
+  Write-Host "  $mark $requiredSplitPath"
+}
+
+if (Test-Path $portableBaseDir) {
+  Remove-Item -Recurse -Force $portableBaseDir
 }

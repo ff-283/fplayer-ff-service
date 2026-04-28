@@ -41,6 +41,13 @@ git lfs version
 .\scripts\start-all.ps1
 ```
 
+内核模式（无 UI，启动后自动拉起服务并输出运行信息）：
+
+```powershell
+cd .\ui
+npm run start:kernel
+```
+
 或直接双击：
 
 - `start-service.bat`
@@ -58,8 +65,9 @@ git lfs version
 发布使用（推荐）：
 
 - 先执行 `.\scripts\build-release.ps1`
-- 分发 `release/portable` 整目录
-- 用户双击 `portable/FPlayerFFService.exe` 直接运行（无需手动脚本）
+- 按模式分离分发：
+  - `release/portable-ui`（仅 UI，可执行程序：`FPlayerFFService.exe`）
+  - `release/portable-kernel`（仅内核，可执行程序：`FPlayerFFServiceKernel.exe`）
 
 ## 快速验证
 
@@ -92,14 +100,13 @@ git lfs version
 
 - `release/`
   - 最新安装包 `.exe`
-  - `portable/`（推荐分发目录，双击 `FPlayerFFService.exe` 直接运行）
-    - 同级内含 `3rd/`、`gateway/bin/gateway.exe`、`scripts/*`、`resources/*`
+  - `portable-ui/`（UI 分发目录）
+  - `portable-kernel/`（内核分发目录）
   - `win-unpacked/`（electron-builder 原始产物）
-  - `README-发布说明.txt`（给使用者的发布说明）
 
 说明：
 
-- `build-release.ps1` 会校验 `portable` 关键依赖是否齐全，避免发包漏 `gateway/3rd/scripts/resources`
+- `build-release.ps1` 会校验 `portable-ui` 与 `portable-kernel` 关键依赖是否齐全，避免发包漏 `gateway/3rd/scripts/resources`
 - 打包版 UI 启动时会自动拉起 service 内核（ZLM + gateway），并默认隐藏子进程控制台窗口
 
 ## 清理可再生产物（可选）

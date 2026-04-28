@@ -4,15 +4,145 @@ const http = require("http");
 const net = require("net");
 const os = require("os");
 const path = require("path");
+const readline = require("readline");
 const { spawn } = require("child_process");
 
-const managedMode = process.env.SERVICE_MANAGED_MODE === "1" || app.isPackaged;
+const execBaseName = path.basename(process.execPath || "").toLowerCase();
+const kernelModeByExeName = execBaseName.includes("kernel");
+const kernelMode = kernelModeByExeName || process.argv.includes("--kernel") || process.env.SERVICE_KERNEL_MODE === "1";
+const managedMode = kernelMode || process.env.SERVICE_MANAGED_MODE === "1" || app.isPackaged;
 let stopTriggered = false;
 let managedChildren = { zlm: null, gateway: null };
+let kernelHeartbeatTimer = null;
+const kernelCli = {
+  enabled: false,
+  maxLines: 14,
+  lines: [],
+  title: "fplayer-ff-service kernel",
+  verboseLogs: false,
+  keyControlsReady: false,
+  restoreRawMode: false,
+  status: "idle",
+  message: "未启动",
+  runtime: {
+    gateway: "N/A",
+    rtmp: "N/A",
+    flv: "N/A"
+  }
+};
 let coreStartupStatus = {
   state: "idle",
   message: "未启动"
 };
+
+function setupKernelCli() {
+  if (!kernelMode) {
+    return;
+  }
+  kernelCli.enabled = !!process.stdout.isTTY;
+  const fromEnv = Number(process.env.SERVICE_KERNEL_LOG_LINES || "");
+  if (Number.isFinite(fromEnv) && fromEnv >= 6 && fromEnv <= 200) {
+    kernelCli.maxLines = Math.floor(fromEnv);
+  }
+}
+
+function setupKernelKeyControls() {
+  if (!kernelMode || !kernelCli.enabled || !process.stdin.isTTY) {
+    return;
+  }
+  readline.emitKeypressEvents(process.stdin);
+  if (!process.stdin.isRaw) {
+    process.stdin.setRawMode(true);
+    kernelCli.restoreRawMode = true;
+  }
+  process.stdin.resume();
+  process.stdin.on("keypress", (_, key) => {
+    if (!key) {
+      return;
+    }
+    if (key.ctrl && key.name === "c") {
+      process.kill(process.pid, "SIGINT");
+      return;
+    }
+    if (key.name === "l") {
+      kernelCli.verboseLogs = !kernelCli.verboseLogs;
+      kernelLog(`log mode => ${kernelCli.verboseLogs ? "detailed" : "compact"}`, "info", true);
+      return;
+    }
+    if (key.name === "c") {
+      kernelCli.lines = [];
+      kernelLog("log window cleared", "info", true);
+    }
+  });
+  kernelCli.keyControlsReady = true;
+}
+
+function teardownKernelKeyControls() {
+  if (!kernelMode || !kernelCli.enabled || !process.stdin.isTTY) {
+    return;
+  }
+  if (kernelCli.restoreRawMode && process.stdin.isRaw) {
+    process.stdin.setRawMode(false);
+  }
+  kernelCli.restoreRawMode = false;
+}
+
+function kernelPushLog(text) {
+  const ts = new Date().toTimeString().slice(0, 8);
+  kernelCli.lines.push(`${ts}  ${text}`);
+  if (kernelCli.lines.length > kernelCli.maxLines) {
+    kernelCli.lines.splice(0, kernelCli.lines.length - kernelCli.maxLines);
+  }
+}
+
+function renderKernelCli() {
+  if (!kernelMode) {
+    return;
+  }
+  if (!kernelCli.enabled) {
+    return;
+  }
+  const body = [
+    "==================================================",
+    ` ${kernelCli.title}`,
+    "==================================================",
+    ` 状态: ${kernelCli.status}`,
+    ` 描述: ${kernelCli.message}`,
+    ` Gateway: ${kernelCli.runtime.gateway}`,
+    ` RTMP:    ${kernelCli.runtime.rtmp}`,
+    ` HTTPFLV: ${kernelCli.runtime.flv}`,
+    ` Controls: [L] ${kernelCli.verboseLogs ? "Detailed" : "Compact"} logs  [C] Clear logs  [Ctrl+C] Exit`,
+    "--------------------------------------------------",
+    ` 日志窗口(最近 ${kernelCli.maxLines} 条):`,
+    ...kernelCli.lines
+  ];
+  readline.cursorTo(process.stdout, 0, 0);
+  readline.clearScreenDown(process.stdout);
+  process.stdout.write(`${body.join("\n")}\n`);
+}
+
+function kernelUpdateStatus(state, message) {
+  kernelCli.status = state || "unknown";
+  kernelCli.message = message || "unknown";
+}
+
+function kernelSetRuntime(runtime) {
+  kernelCli.runtime.gateway = runtime?.gateway?.url || "N/A";
+  kernelCli.runtime.rtmp = runtime?.endpoints?.publishRtmp || "N/A";
+  kernelCli.runtime.flv = runtime?.endpoints?.playHttpFlv || "N/A";
+}
+
+function kernelLog(text, level = "info", force = false) {
+  if (!force && level === "detail" && !kernelCli.verboseLogs) {
+    return;
+  }
+  if (kernelCli.enabled) {
+    kernelPushLog(text);
+    renderKernelCli();
+    return;
+  }
+  console.log(`[Kernel] ${text}`);
+}
 
 function getServiceRootDir() {
   if (app.isPackaged) {
@@ -196,6 +326,10 @@ function stopManagedCoreInternal() {
 
 async function startManagedCoreInternal() {
   coreStartupStatus = { state: "starting", message: "正在启动 ZLM 与 gateway..." };
+  if (kernelMode) {
+    kernelUpdateStatus(coreStartupStatus.state, coreStartupStatus.message);
+    kernelLog("开始启动服务核心");
+  }
   const { rootDir, runDir, logDir } = getManagedPaths();
   const zlmDir = path.join(rootDir, "3rd", "zlm", "windows");
   const zlmExe = path.join(zlmDir, "MediaServer.exe");
@@ -225,6 +359,9 @@ async function startManagedCoreInternal() {
   );
   managedChildren.zlm = zlm;
   writePidFile(runDir, "zlm", zlm.pid);
+  if (kernelMode) {
+    kernelLog(`ZLM started (pid=${zlm.pid})`);
+  }
 
   let gatewayPort = -1;
   let gateway = null;
@@ -254,6 +391,9 @@ async function startManagedCoreInternal() {
     const healthy = await waitGatewayHealthy(candidate, 5000);
     if (healthy) {
       gatewayPort = candidate;
+      if (kernelMode) {
+        kernelLog(`Gateway healthy on port ${gatewayPort}`);
+      }
       break;
     }
     safeKillPid(gateway.pid);
@@ -269,6 +409,9 @@ async function startManagedCoreInternal() {
   managedChildren.gateway = gateway;
   writePidFile(runDir, "gateway", gateway.pid);
   writePidFile(runDir, "ui", process.pid);
+  if (kernelMode) {
+    kernelLog(`Gateway started (pid=${gateway.pid})`);
+  }
 
   const lanHost = getLanIpv4();
   const runtime = {
@@ -290,6 +433,11 @@ async function startManagedCoreInternal() {
   };
   fs.writeFileSync(path.join(runDir, "runtime.json"), JSON.stringify(runtime, null, 2), "utf8");
   coreStartupStatus = { state: "ready", message: `服务已就绪（gateway: ${runtime.gateway.url}）` };
+  if (kernelMode) {
+    kernelSetRuntime(runtime);
+    kernelUpdateStatus(coreStartupStatus.state, coreStartupStatus.message);
+    kernelLog("runtime.json written");
+  }
 }
 
 function startManagedCoreByScript() {
@@ -337,6 +485,70 @@ function readRuntimeGatewayUrl() {
   } catch (_) {
     return null;
   }
+}
+
+function readRuntimeObject() {
+  try {
+    const rootDir = getServiceRootDir();
+    const runtimePath = path.join(rootDir, "run", "runtime.json");
+    if (!fs.existsSync(runtimePath)) {
+      return null;
+    }
+    return JSON.parse(fs.readFileSync(runtimePath, "utf8"));
+  } catch (_) {
+    return null;
+  }
+}
+
+function printKernelBanner() {
+  kernelUpdateStatus(coreStartupStatus.state, coreStartupStatus.message);
+  kernelLog(`kernel started at ${new Date().toLocaleString()}`, "info", true);
+  kernelLog("hotkeys ready: L=toggle logs, C=clear, Ctrl+C=stop", "info", true);
+  if (!kernelCli.keyControlsReady) {
+    kernelLog("hotkeys unavailable in current terminal (non-TTY).", "info", true);
+  }
+}
+
+function printKernelRuntimeInfo() {
+  const runtime = readRuntimeObject();
+  if (!runtime) {
+    kernelLog("runtime.json not found yet.");
+    return;
+  }
+  kernelSetRuntime(runtime);
+  kernelLog("service endpoints refreshed");
+}
+
+function startKernelHeartbeat() {
+  return setInterval(() => {
+    const status = coreStartupStatus?.state || "unknown";
+    const message = coreStartupStatus?.message || "unknown";
+    kernelUpdateStatus(status, message);
+    kernelLog(`heartbeat: ${status}`, "detail");
+  }, 8000);
+}
+
+function installKernelShutdownHooks() {
+  const shutdown = () => {
+    if (stopTriggered) {
+      return;
+    }
+    stopTriggered = true;
+    try {
+      kernelLog("stopping service core...");
+      if (kernelMode || app.isPackaged) {
+        stopManagedCoreInternal();
+      } else {
+        stopManagedCoreByScript();
+      }
+      kernelUpdateStatus("stopped", "服务已停止");
+      kernelLog("service stopped");
+    } finally {
+      app.quit();
+    }
+  };
+  process.on("SIGINT", shutdown);
+  process.on("SIGTERM", shutdown);
 }
 
 function createWindow() {
@@ -396,35 +608,64 @@ ipcMain.handle("service:stopServiceCore", async () => {
 });
 
 app.whenReady().then(() => {
+  setupKernelCli();
+  setupKernelKeyControls();
   coreStartupStatus = managedMode
     ? { state: "starting", message: "正在初始化服务..." }
     : { state: "ready", message: "当前为非托管模式。" };
-  createWindow();
-  app.on("activate", () => {
-    if (BrowserWindow.getAllWindows().length === 0) {
-      createWindow();
-    }
-  });
+  if (!kernelMode) {
+    createWindow();
+    app.on("activate", () => {
+      if (BrowserWindow.getAllWindows().length === 0) {
+        createWindow();
+      }
+    });
+  } else {
+    printKernelBanner();
+    installKernelShutdownHooks();
+  }
 
   // Start service core in background to keep UI startup fast.
   if (managedMode) {
     (async () => {
       try {
-        if (app.isPackaged) {
+        if (kernelMode || app.isPackaged) {
           await startManagedCoreInternal();
         } else {
           startManagedCoreByScript();
         }
+        if (kernelMode) {
+          printKernelRuntimeInfo();
+          kernelHeartbeatTimer = startKernelHeartbeat();
+        }
       } catch (err) {
         // Keep UI alive for debugging; logs record service startup failures.
         coreStartupStatus = { state: "failed", message: `启动失败：${err?.message || err}` };
+        if (kernelMode) {
+          kernelUpdateStatus(coreStartupStatus.state, coreStartupStatus.message);
+          kernelLog(`startup failed: ${err?.message || err}`);
+        }
         console.error(`Managed core startup failed: ${err?.message || err}`);
+        if (kernelMode) {
+          app.exit(1);
+        }
       }
     })();
   }
 });
 
+app.on("before-quit", () => {
+  teardownKernelKeyControls();
+  if (kernelHeartbeatTimer) {
+    clearInterval(kernelHeartbeatTimer);
+    kernelHeartbeatTimer = null;
+  }
+});
+
 app.on("window-all-closed", () => {
+  if (kernelMode) {
+    return;
+  }
   if (managedMode && !stopTriggered) {
     stopTriggered = true;
     if (app.isPackaged) {
