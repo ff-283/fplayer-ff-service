@@ -157,6 +157,10 @@ function getServiceRootDir() {
   return path.resolve(__dirname, "..");
 }
 
+function getAppIconPath() {
+  return path.join(getServiceRootDir(), "doc", "img", "icon.png");
+}
+
 function ensureDir(dirPath) {
   fs.mkdirSync(dirPath, { recursive: true });
 }
@@ -552,11 +556,13 @@ function installKernelShutdownHooks() {
 }
 
 function createWindow() {
+  const iconPath = getAppIconPath();
   const win = new BrowserWindow({
     width: 980,
     height: 720,
     minWidth: 860,
     minHeight: 640,
+    icon: fs.existsSync(iconPath) ? iconPath : undefined,
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
       contextIsolation: true,
@@ -608,6 +614,10 @@ ipcMain.handle("service:stopServiceCore", async () => {
 });
 
 app.whenReady().then(() => {
+  const iconPath = getAppIconPath();
+  if (fs.existsSync(iconPath)) {
+    app.setIcon(iconPath);
+  }
   setupKernelCli();
   setupKernelKeyControls();
   coreStartupStatus = managedMode

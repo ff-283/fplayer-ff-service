@@ -35,9 +35,14 @@
       {
         "from": "../gateway/bin",
         "to": "gateway/bin"
+      },
+      {
+        "from": "../doc/img",
+        "to": "doc/img"
       }
     ],
     "win": {
+      "icon": "../doc/img/icon.png",
       "target": [
         "portable"
       ]

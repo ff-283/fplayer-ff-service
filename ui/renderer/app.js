@@ -10,6 +10,8 @@ const btnCopyStream = document.getElementById("btnCopyStream");
 const btnStart = document.getElementById("btnStart");
 const btnCopyRtmp = document.getElementById("btnCopyRtmp");
 const btnCopyFlv = document.getElementById("btnCopyFlv");
+const btnCopyHls = document.getElementById("btnCopyHls");
+const btnCopyMobilePlay = document.getElementById("btnCopyMobilePlay");
 const btnQuery = document.getElementById("btnQuery");
 const btnStop = document.getElementById("btnStop");
 const btnStopService = document.getElementById("btnStopService");
@@ -18,9 +20,22 @@ const elGatewayLogs = document.getElementById("gatewayLogs");
 const elGatewayErrLogs = document.getElementById("gatewayErrLogs");
 const elZlmLogs = document.getElementById("zlmLogs");
 const elUiErrLogs = document.getElementById("uiErrLogs");
+const elCopyToast = document.getElementById("copyToast");
+const elMobilePlayProtocol = document.getElementById("mobilePlayProtocol");
+const elMobilePlayUrl = document.getElementById("mobilePlayUrl");
+const elCurrentPublishRtmp = document.getElementById("currentPublishRtmp");
+const elCurrentPlayHttpFlv = document.getElementById("currentPlayHttpFlv");
+const elCurrentPlayHls = document.getElementById("currentPlayHls");
 
 let current = null;
 let startupReady = false;
+let serviceRunning = false;
+let toastTimer = null;
+const isBrowserPreview = typeof navigator !== "undefined" && !/Electron/i.test(navigator.userAgent || "");
+
+if (elMobilePlayProtocol) {
+  elMobilePlayProtocol.value = isBrowserPreview ? "hls" : "httpFlv";
+}
 
 if (window.nativeBridge?.getDefaultGatewayUrl) {
   window.nativeBridge.getDefaultGatewayUrl().then((url) => {
@@ -34,13 +49,81 @@ function setResult(text) {
   elResult.textContent = text;
 }
 
+function getMobilePlayUrlByProtocol(data, protocol) {
+  if (!data) {
+    return "";
+  }
+  if (protocol === "hls") {
+    return data.playHls || data.playUrls?.hls || "";
+  }
+  return data.playHttpFlv || "";
+}
+
+function getMobileProtocolLabel(protocol) {
+  return protocol === "hls" ? "HLS" : "HTTP-FLV";
+}
+
+function syncMobilePlayAddress() {
+  if (!elMobilePlayUrl || !btnCopyMobilePlay) {
+    return;
+  }
+  const protocol = elMobilePlayProtocol?.value || "httpFlv";
+  const value = getMobilePlayUrlByProtocol(current, protocol);
+  elMobilePlayUrl.value = value;
+  btnCopyMobilePlay.disabled = !String(value || "").trim();
+}
+
+function syncStartStopButtons() {
+  btnStart.disabled = !startupReady || serviceRunning;
+  btnStopService.disabled = !serviceRunning;
+}
+
+function showCopyToast(message, isError = false) {
+  if (!elCopyToast) {
+    return;
+  }
+  elCopyToast.textContent = message;
+  elCopyToast.className = `copy-toast show ${isError ? "error" : "success"}`;
+  if (toastTimer) {
+    clearTimeout(toastTimer);
+  }
+  toastTimer = setTimeout(() => {
+    elCopyToast.className = "copy-toast";
+  }, 1400);
+}
+
+async function copyTextWithFeedback(text, label) {
+  const value = String(text || "").trim();
+  if (!value) {
+    showCopyToast(`${label}为空，无法复制`, true);
+    return;
+  }
+
+  try {
+    const nativeRet = window.nativeBridge?.copyText?.(value);
+    if (nativeRet?.ok === true) {
+      showCopyToast(`${label}已复制`);
+      return;
+    }
+    if (navigator?.clipboard?.writeText) {
+      await navigator.clipboard.writeText(value);
+      showCopyToast(`${label}已复制`);
+      return;
+    }
+    const reason = nativeRet?.message || "当前环境不支持复制";
+    showCopyToast(`复制失败：${reason}`, true);
+  } catch (err) {
+    showCopyToast(`复制失败：${err?.message || err}`, true);
+  }
+}
+
 function setStartupStatus(state, message) {
   const text = message || "状态未知";
   if (elStartupStatus) {
     elStartupStatus.textContent = text;
   }
   startupReady = state === "ready";
-  btnStart.disabled = !startupReady;
+  syncStartStopButtons();
 }
 
 async function refreshStartupStatus() {
@@ -59,8 +142,19 @@ async function refreshStartupStatus() {
 function renderCurrent() {
   if (!current) {
     setResult("尚未创建流。");
+    if (elCurrentPublishRtmp) {
+      elCurrentPublishRtmp.value = "";
+    }
+    if (elCurrentPlayHttpFlv) {
+      elCurrentPlayHttpFlv.value = "";
+    }
+    if (elCurrentPlayHls) {
+      elCurrentPlayHls.value = "";
+    }
+    syncMobilePlayAddress();
     btnCopyRtmp.disabled = true;
     btnCopyFlv.disabled = true;
+    btnCopyHls.disabled = true;
     btnQuery.disabled = true;
     btnStop.disabled = true;
     return;
@@ -72,11 +166,23 @@ function renderCurrent() {
       `服务类型: ${current.serviceMode || "httpflv"}`,
       `RTMP 推流: ${current.publishRtmp}`,
       `HTTP-FLV 播放: ${current.playHttpFlv || "未启用"}`,
+      `HLS 播放: ${current.playHls || current.playUrls?.hls || "未启用"}`,
       `可拉流地址: ${JSON.stringify(current.playUrls || {}, null, 2)}`
     ].join("\n")
   );
-  btnCopyRtmp.disabled = false;
-  btnCopyFlv.disabled = false;
+  if (elCurrentPublishRtmp) {
+    elCurrentPublishRtmp.value = current.publishRtmp || "";
+  }
+  if (elCurrentPlayHttpFlv) {
+    elCurrentPlayHttpFlv.value = current.playHttpFlv || "";
+  }
+  if (elCurrentPlayHls) {
+    elCurrentPlayHls.value = current.playHls || current.playUrls?.hls || "";
+  }
+  btnCopyRtmp.disabled = !(elCurrentPublishRtmp?.value && String(elCurrentPublishRtmp.value).trim());
+  btnCopyFlv.disabled = !(elCurrentPlayHttpFlv?.value && String(elCurrentPlayHttpFlv.value).trim());
+  btnCopyHls.disabled = !(elCurrentPlayHls?.value && String(elCurrentPlayHls.value).trim());
+  syncMobilePlayAddress();
   btnQuery.disabled = false;
   btnStop.disabled = false;
 }
@@ -148,6 +254,8 @@ async function refreshLogs() {
 btnStart.addEventListener("click", async () => {
   try {
     await startStream();
+    serviceRunning = true;
+    syncStartStopButtons();
   } catch (err) {
     setResult(`创建失败: ${err.message}`);
   }
@@ -170,25 +278,36 @@ btnStop.addEventListener("click", async () => {
 });
 
 btnCopyRtmp.addEventListener("click", () => {
-  if (!current) return;
-  window.nativeBridge.copyText(current.publishRtmp);
+  copyTextWithFeedback(elCurrentPublishRtmp?.value || "", "RTMP地址");
 });
 
 btnCopyFlv.addEventListener("click", () => {
-  if (!current) return;
-  window.nativeBridge.copyText(current.playHttpFlv);
+  copyTextWithFeedback(elCurrentPlayHttpFlv?.value || "", "HTTP-FLV地址");
+});
+
+btnCopyHls.addEventListener("click", () => {
+  copyTextWithFeedback(elCurrentPlayHls?.value || "", "HLS地址");
+});
+
+btnCopyMobilePlay.addEventListener("click", () => {
+  const protocol = elMobilePlayProtocol?.value || "httpFlv";
+  copyTextWithFeedback(elMobilePlayUrl?.value || "", `mobile拉流地址(${getMobileProtocolLabel(protocol)})`);
+});
+
+elMobilePlayProtocol?.addEventListener("change", () => {
+  syncMobilePlayAddress();
 });
 
 btnCopyGateway.addEventListener("click", () => {
-  window.nativeBridge.copyText(elGateway.value.trim());
+  copyTextWithFeedback(elGateway.value.trim(), "Gateway URL");
 });
 
 btnCopyApp.addEventListener("click", () => {
-  window.nativeBridge.copyText(elApp.value.trim());
+  copyTextWithFeedback(elApp.value.trim(), "App");
 });
 
 btnCopyStream.addEventListener("click", () => {
-  window.nativeBridge.copyText(elStream.value.trim());
+  copyTextWithFeedback(elStream.value.trim(), "Stream");
 });
 
 btnLogsRefresh.addEventListener("click", async () => {
@@ -211,6 +330,8 @@ btnStopService.addEventListener("click", async () => {
       return;
     }
     setResult("服务已停止。");
+    serviceRunning = false;
+    syncStartStopButtons();
     current = null;
     renderCurrent();
     refreshStartupStatus().catch(() => {});
@@ -221,6 +342,7 @@ btnStopService.addEventListener("click", async () => {
 
 renderCurrent();
 setStartupStatus("starting", "正在启动服务...");
+syncStartStopButtons();
 refreshStartupStatus().catch(() => {});
 setInterval(() => {
   refreshStartupStatus().catch(() => {});

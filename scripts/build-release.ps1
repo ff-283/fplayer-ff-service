@@ -1,4 +1,70 @@
 $ErrorActionPreference = "Stop"
+Set-StrictMode -Version Latest
+
+function Assert-PathString {
+  param(
+    [Parameter(Mandatory = $true)][string]$Value,
+    [Parameter(Mandatory = $true)][string]$Name
+  )
+  if ([string]::IsNullOrWhiteSpace($Value)) {
+    throw "Path variable '$Name' is empty."
+  }
+}
+
+function Test-PathSafe {
+  param(
+    [Parameter(Mandatory = $true)][string]$PathValue,
+    [Parameter(Mandatory = $true)][string]$PathName
+  )
+  Assert-PathString -Value $PathValue -Name $PathName
+  return Test-Path -LiteralPath $PathValue
+}
+
+function Stop-ReleaseProcesses {
+  param(
+    [Parameter(Mandatory = $true)][string]$ReleaseRoot
+  )
+  Assert-PathString -Value $ReleaseRoot -Name "ReleaseRoot"
+  $normalizedRoot = [System.IO.Path]::GetFullPath($ReleaseRoot)
+  Get-Process -ErrorAction SilentlyContinue | ForEach-Object {
+    try {
+      $procPath = $_.Path
+      if ([string]::IsNullOrWhiteSpace($procPath)) {
+        return
+      }
+      $fullProcPath = [System.IO.Path]::GetFullPath($procPath)
+      if ($fullProcPath.StartsWith($normalizedRoot, [System.StringComparison]::OrdinalIgnoreCase)) {
+        Stop-Process -Id $_.Id -Force -ErrorAction Stop
+      }
+    } catch {
+      # 忽略无权限/系统进程读取失败
+    }
+  }
+}
+
+function Remove-DirectoryWithRetry {
+  param(
+    [Parameter(Mandatory = $true)][string]$DirPath,
+    [Parameter(Mandatory = $true)][string]$DirName
+  )
+  if (!(Test-PathSafe -PathValue $DirPath -PathName $DirName)) {
+    return
+  }
+  $attempt = 0
+  while ($attempt -lt 3) {
+    try {
+      Remove-Item -LiteralPath $DirPath -Recurse -Force -ErrorAction Stop
+      return
+    } catch {
+      $attempt += 1
+      if ($attempt -ge 3) {
+        throw "Failed to remove '$DirPath'. It is likely locked by a running process. Please close apps using files under release and retry."
+      }
+      Stop-ReleaseProcesses -ReleaseRoot (Split-Path -Parent $DirPath)
+      Start-Sleep -Milliseconds (500 * $attempt)
+    }
+  }
+}
 
 $root = Split-Path -Parent (Split-Path -Parent $MyInvocation.MyCommand.Path)
 $uiDir = Join-Path $root "ui"
@@ -6,6 +72,12 @@ $distDir = Join-Path $uiDir "dist"
 $releaseDir = Join-Path $root "release"
 $winUnpackedDir = Join-Path $distDir "win-unpacked"
 $gatewayExe = Join-Path $root "gateway\bin\gateway.exe"
+Assert-PathString -Value $root -Name "root"
+Assert-PathString -Value $uiDir -Name "uiDir"
+Assert-PathString -Value $distDir -Name "distDir"
+Assert-PathString -Value $releaseDir -Name "releaseDir"
+Assert-PathString -Value $winUnpackedDir -Name "winUnpackedDir"
+Assert-PathString -Value $gatewayExe -Name "gatewayExe"
 
 Write-Host "Step 1/3: build installer ..."
 powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $root "scripts\build-win-package.ps1")
@@ -19,16 +91,19 @@ if (-not $installer) {
 }
 
 $targetInstaller = Join-Path $releaseDir $installer.Name
-Copy-Item -Path $installer.FullName -Destination $targetInstaller -Force
+try {
+  Copy-Item -Path $installer.FullName -Destination $targetInstaller -Force -ErrorAction Stop
+} catch {
+  Write-Warning "Failed to copy installer to release (file may be locked): $targetInstaller"
+  Write-Warning "Portable package will still be generated. Close file handles and retry if installer copy is required."
+}
 
-if (!(Test-Path $winUnpackedDir)) {
+if (!(Test-PathSafe -PathValue $winUnpackedDir -PathName "winUnpackedDir")) {
   throw "win-unpacked directory not found: $winUnpackedDir"
 }
 
 $packagedPortableDir = Join-Path $releaseDir "win-unpacked"
-if (Test-Path $packagedPortableDir) {
-  Remove-Item -Recurse -Force $packagedPortableDir
-}
+Remove-DirectoryWithRetry -DirPath $packagedPortableDir -DirName "packagedPortableDir"
 Copy-Item -Path $winUnpackedDir -Destination $packagedPortableDir -Recurse -Force
 
 $portableBaseDir = Join-Path $releaseDir "_portable-base"
