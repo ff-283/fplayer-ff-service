@@ -66,23 +66,56 @@ function Remove-DirectoryWithRetry {
   }
 }
 
+function Stop-ServiceReleaseProcesses {
+  $names = @("FPlayerFFService", "FPlayerFFServiceKernel")
+  foreach ($name in $names) {
+    try {
+      Get-Process -Name $name -ErrorAction SilentlyContinue | ForEach-Object {
+        Stop-Process -Id $_.Id -Force -ErrorAction SilentlyContinue
+      }
+    } catch {
+    }
+  }
+}
+
+function Show-ReleaseLockedPopup {
+  param(
+    [Parameter(Mandatory = $true)][string]$ReleasePath
+  )
+  try {
+    Add-Type -AssemblyName PresentationFramework -ErrorAction SilentlyContinue
+    $msg = "Failed to clean release directory:`n$ReleasePath`n`nPlease close apps using the release folder (Explorer windows, FPlayerFFService processes) and retry."
+    [System.Windows.MessageBox]::Show($msg, "Build failed: release is locked", "OK", "Warning") | Out-Null
+  } catch {
+  }
+}
+
 $root = Split-Path -Parent (Split-Path -Parent $MyInvocation.MyCommand.Path)
 $uiDir = Join-Path $root "ui"
 $distDir = Join-Path $uiDir "dist"
 $releaseDir = Join-Path $root "release"
 $winUnpackedDir = Join-Path $distDir "win-unpacked"
 $gatewayExe = Join-Path $root "gateway\bin\gateway.exe"
+$kernelConsoleExe = Join-Path $root "kernel-console\bin\FPlayerFFServiceKernel.exe"
 Assert-PathString -Value $root -Name "root"
 Assert-PathString -Value $uiDir -Name "uiDir"
 Assert-PathString -Value $distDir -Name "distDir"
 Assert-PathString -Value $releaseDir -Name "releaseDir"
 Assert-PathString -Value $winUnpackedDir -Name "winUnpackedDir"
 Assert-PathString -Value $gatewayExe -Name "gatewayExe"
+Assert-PathString -Value $kernelConsoleExe -Name "kernelConsoleExe"
 
 Write-Host "Step 1/3: build installer ..."
 powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $root "scripts\build-win-package.ps1")
 
 Write-Host "Step 2/3: collect artifacts ..."
+Stop-ServiceReleaseProcesses
+try {
+  Remove-DirectoryWithRetry -DirPath $releaseDir -DirName "releaseDir"
+} catch {
+  Show-ReleaseLockedPopup -ReleasePath $releaseDir
+  throw
+}
 New-Item -ItemType Directory -Force -Path $releaseDir | Out-Null
 
 $installer = Get-ChildItem -Path $distDir -File -Filter "*.exe" | Sort-Object LastWriteTime -Descending | Select-Object -First 1
@@ -101,35 +134,26 @@ try {
 if (!(Test-PathSafe -PathValue $winUnpackedDir -PathName "winUnpackedDir")) {
   throw "win-unpacked directory not found: $winUnpackedDir"
 }
+if (!(Test-PathSafe -PathValue $kernelConsoleExe -PathName "kernelConsoleExe")) {
+  throw "kernel console executable not found: $kernelConsoleExe"
+}
 
 $packagedPortableDir = Join-Path $releaseDir "win-unpacked"
 Remove-DirectoryWithRetry -DirPath $packagedPortableDir -DirName "packagedPortableDir"
 Copy-Item -Path $winUnpackedDir -Destination $packagedPortableDir -Recurse -Force
 
 $portableBaseDir = Join-Path $releaseDir "_portable-base"
-if (Test-Path $portableBaseDir) {
-  Remove-Item -Recurse -Force $portableBaseDir
-}
+Remove-DirectoryWithRetry -DirPath $portableBaseDir -DirName "portableBaseDir"
 # 先复制一份基础目录（包含 Electron 运行时 DLL，如 ffmpeg.dll），再拆分 UI/Kernel 包
 New-Item -ItemType Directory -Force -Path $portableBaseDir | Out-Null
 Get-ChildItem -LiteralPath $winUnpackedDir -Force | ForEach-Object {
   Copy-Item -Path $_.FullName -Destination $portableBaseDir -Recurse -Force
 }
 
-$uiExePath = Join-Path $portableBaseDir "FPlayerFFService.exe"
-$kernelExePath = Join-Path $portableBaseDir "FPlayerFFServiceKernel.exe"
-if (Test-Path $uiExePath) {
-  Copy-Item -Path $uiExePath -Destination $kernelExePath -Force
-}
-
 $portableUiDir = Join-Path $releaseDir "portable-ui"
 $portableKernelDir = Join-Path $releaseDir "portable-kernel"
-if (Test-Path $portableUiDir) {
-  Remove-Item -Recurse -Force $portableUiDir
-}
-if (Test-Path $portableKernelDir) {
-  Remove-Item -Recurse -Force $portableKernelDir
-}
+Remove-DirectoryWithRetry -DirPath $portableUiDir -DirName "portableUiDir"
+Remove-DirectoryWithRetry -DirPath $portableKernelDir -DirName "portableKernelDir"
 
 $source3rd = Join-Path $root "3rd"
 if (Test-Path $source3rd) {
@@ -145,8 +169,14 @@ New-Item -ItemType Directory -Force -Path (Join-Path $portableBaseDir "gateway\b
 Copy-Item -Path $gatewayExe -Destination (Join-Path $portableBaseDir "gateway\bin\gateway.exe") -Force
 Copy-Item -Path (Join-Path $root "scripts") -Destination (Join-Path $portableBaseDir "scripts") -Recurse -Force
 
-Copy-Item -Path $portableBaseDir -Destination $portableUiDir -Recurse -Force
-Copy-Item -Path $portableBaseDir -Destination $portableKernelDir -Recurse -Force
+New-Item -ItemType Directory -Force -Path $portableUiDir | Out-Null
+Get-ChildItem -LiteralPath $portableBaseDir -Force | ForEach-Object {
+  Copy-Item -Path $_.FullName -Destination $portableUiDir -Recurse -Force
+}
+New-Item -ItemType Directory -Force -Path $portableKernelDir | Out-Null
+Get-ChildItem -LiteralPath $portableBaseDir -Force | ForEach-Object {
+  Copy-Item -Path $_.FullName -Destination $portableKernelDir -Recurse -Force
+}
 
 $portableUiKernelExe = Join-Path $portableUiDir "FPlayerFFServiceKernel.exe"
 if (Test-Path $portableUiKernelExe) {
@@ -156,10 +186,10 @@ $portableKernelUiExe = Join-Path $portableKernelDir "FPlayerFFService.exe"
 if (Test-Path $portableKernelUiExe) {
   Remove-Item -Force $portableKernelUiExe
 }
+Copy-Item -Path $kernelConsoleExe -Destination (Join-Path $portableKernelDir "FPlayerFFServiceKernel.exe") -Force
 
 $requiredBasePaths = @(
   (Join-Path $portableBaseDir "FPlayerFFService.exe"),
-  (Join-Path $portableBaseDir "FPlayerFFServiceKernel.exe"),
   (Join-Path $portableBaseDir "ffmpeg.dll"),
   (Join-Path $portableBaseDir "3rd"),
   (Join-Path $portableBaseDir "3rd\zlm\windows"),
@@ -200,6 +230,4 @@ foreach ($requiredSplitPath in $requiredSplitPaths) {
   Write-Host "  $mark $requiredSplitPath"
 }
 
-if (Test-Path $portableBaseDir) {
-  Remove-Item -Recurse -Force $portableBaseDir
-}
+Remove-DirectoryWithRetry -DirPath $portableBaseDir -DirName "portableBaseDir-finally"

@@ -3,6 +3,10 @@
 /run/
 /logs/
 /gateway/bin/
+/kernel-console/bin/
+/kernel-console/*.exe
+/3rd/zlm/windows/log/
+/.idea/
 /ui/node_modules/
 /ui/.cache/
 /ui/.webpack/

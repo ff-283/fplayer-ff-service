@@ -45,11 +45,11 @@ git lfs version
 .\scripts\start-all.ps1
 ```
 
-内核模式（无 UI，启动后自动拉起服务并输出运行信息）：
+控制台内核启动器（独立控制台，支持 `Ctrl+C` 停止）：
 
 ```powershell
-cd .\ui
-npm run start:kernel
+cd .\kernel-console
+go run .
 ```
 
 或直接双击：
@@ -89,6 +89,7 @@ npm run start:kernel
 该脚本会：
 
 - 编译 `gateway.exe`（输出到 `gateway/bin/gateway.exe`）
+- 编译控制台内核启动器（输出到 `kernel-console/bin/FPlayerFFServiceKernel.exe`）
 - 安装 UI 依赖
 - 调用 `electron-builder` 产出 Windows 安装包（`ui/dist`）
 
@@ -138,6 +139,7 @@ npm run start:kernel
 
 - `3rd/zlm/windows/`：Windows 版 ZLMediaKit（`MediaServer.exe`）
 - `gateway/`：Go 网关服务（会话创建、地址编排）
+- `kernel-console/`：独立控制台内核启动器（Go）
 - `ui/`：Electron 控制台
 - `scripts/start-all.ps1`：一键启动 ZLM + gateway + UI
 - `scripts/stop-all.ps1`：一键停止

@@ -3,6 +3,8 @@ $ErrorActionPreference = "Stop"
 $root = Split-Path -Parent (Split-Path -Parent $MyInvocation.MyCommand.Path)
 $gatewayDir = Join-Path $root "gateway"
 $gatewayBinDir = Join-Path $gatewayDir "bin"
+$kernelConsoleDir = Join-Path $root "kernel-console"
+$kernelConsoleBinDir = Join-Path $kernelConsoleDir "bin"
 $uiDir = Join-Path $root "ui"
 
 if (!(Get-Command go -ErrorAction SilentlyContinue)) {
@@ -13,10 +15,16 @@ if (!(Get-Command npm -ErrorAction SilentlyContinue)) {
 }
 
 New-Item -ItemType Directory -Force -Path $gatewayBinDir | Out-Null
+New-Item -ItemType Directory -Force -Path $kernelConsoleBinDir | Out-Null
 
 Write-Host "Building gateway.exe ..."
 Push-Location $gatewayDir
 go build -o ".\bin\gateway.exe" .
+Pop-Location
+
+Write-Host "Building kernel console launcher ..."
+Push-Location $kernelConsoleDir
+go build -o ".\bin\FPlayerFFServiceKernel.exe" .
 Pop-Location
 
 Write-Host "Installing UI dependencies ..."

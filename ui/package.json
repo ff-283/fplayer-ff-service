@@ -6,7 +6,6 @@
   "main": "main.js",
   "scripts": {
     "start": "electron .",
-    "start:kernel": "electron . --kernel",
     "pack:dir": "electron-builder --dir",
     "dist:win": "electron-builder --win portable"
   },
