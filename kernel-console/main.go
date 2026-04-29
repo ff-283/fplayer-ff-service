@@ -34,19 +34,29 @@ type runtimeInfo struct {
 		PublishRtmp string `json:"publishRtmp"`
 		PlayHTTPFlv string `json:"playHttpFlv"`
 	} `json:"endpoints"`
+	Public struct {
+		Enabled bool   `json:"enabled"`
+		Host    string `json:"host,omitempty"`
+		Source  string `json:"source,omitempty"`
+	} `json:"public"`
 }
 
 type userLinks struct {
 	lanIP            string
+	publicHost       string
+	publicSource     string
 	gatewayURL       string
+	gatewayURLPublic string
 	healthURL        string
 	startAPI         string
 	statusAPIExample string
 	stopAPIExample   string
 	rtmpPublishLocal string
 	rtmpPublishLAN   string
+	rtmpPublishPub   string
 	httpFlvPlayLocal string
 	httpFlvPlayLAN   string
+	httpFlvPlayPub   string
 }
 
 type serviceLayout struct {
@@ -302,6 +312,13 @@ func startCore(layout serviceLayout) (childProcs, runtimeInfo, error) {
 	}
 	fmt.Printf("Generated runtime config: %s\n", layout.ZLMRuntimeCfg)
 
+	publicHost, publicSource := resolvePublicHost(*publicHostFlag, os.Getenv("SERVICE_PUBLIC_HOST"))
+	if publicHost != "" {
+		fmt.Printf("Public host override => enabled (%s, source=%s)\n", publicHost, publicSource)
+	} else {
+		fmt.Println("Public host override => disabled (using LAN/auto host)")
+	}
+
 	zlmOut, zlmErr, err := openLogWriters(layout.LogDir, "zlm")
 	if err != nil {
 		return procs, info, err
@@ -348,8 +365,8 @@ func startCore(layout serviceLayout) (childProcs, runtimeInfo, error) {
 			fmt.Sprintf("SERVICE_GATEWAY_PORT=%d", candidate),
 			fmt.Sprintf("SERVICE_LOG_DIR=%s", layout.LogDir),
 		)
-		if host := strings.TrimSpace(*publicHostFlag); host != "" {
-			cmd.Env = append(cmd.Env, fmt.Sprintf("SERVICE_PUBLIC_HOST=%s", host))
+		if publicHost != "" {
+			cmd.Env = append(cmd.Env, fmt.Sprintf("SERVICE_PUBLIC_HOST=%s", publicHost))
 		}
 		if e = cmd.Start(); e != nil {
 			_ = tmpOut.Close()
@@ -387,6 +404,9 @@ func startCore(layout serviceLayout) (childProcs, runtimeInfo, error) {
 	info.ZLM.HTTPSPort = httpsPort
 	info.Endpoints.PublishRtmp = fmt.Sprintf("rtmp://127.0.0.1:%d/live/stream001", rtmpPort)
 	info.Endpoints.PlayHTTPFlv = fmt.Sprintf("http://127.0.0.1:%d/live/stream001.flv", httpPort)
+	info.Public.Enabled = publicHost != ""
+	info.Public.Host = publicHost
+	info.Public.Source = publicSource
 
 	if err := writeRuntime(layout, info); err != nil {
 		stopCore(layout, procs)
@@ -446,7 +466,7 @@ func printRuntimeSummary(info runtimeInfo) {
 	fmt.Println("")
 	fmt.Println("Runtime (copy-friendly):")
 	links := buildUserLinks(info)
-	printAlignedPairs([][2]string{
+	pairs := [][2]string{
 		{"Gateway URL", links.gatewayURL},
 		{"Health Check", links.healthURL},
 		{"Start API", links.startAPI},
@@ -456,7 +476,16 @@ func printRuntimeSummary(info runtimeInfo) {
 		{"RTMP Publish (LAN)", links.rtmpPublishLAN},
 		{"HTTP-FLV Play (Local)", links.httpFlvPlayLocal},
 		{"HTTP-FLV Play (LAN)", links.httpFlvPlayLAN},
-	})
+	}
+	if links.publicHost != "" {
+		pairs = append(pairs,
+			[2]string{"Public Host Override", fmt.Sprintf("%s (source=%s)", links.publicHost, links.publicSource)},
+			[2]string{"Gateway URL (Public)", links.gatewayURLPublic},
+			[2]string{"RTMP Publish (Public)", links.rtmpPublishPub},
+			[2]string{"HTTP-FLV Play (Public)", links.httpFlvPlayPub},
+		)
+	}
+	printAlignedPairs(pairs)
 }
 
 func waitExitPrompt() {
@@ -475,16 +504,31 @@ func buildUserLinks(info runtimeInfo) userLinks {
 	httpPort := info.ZLM.HTTPPort
 	return userLinks{
 		lanIP:            lanIP,
+		publicHost:       info.Public.Host,
+		publicSource:     info.Public.Source,
 		gatewayURL:       fmt.Sprintf("http://%s:%d", lanIP, gwPort),
+		gatewayURLPublic: fmt.Sprintf("http://%s:%d", info.Public.Host, gwPort),
 		healthURL:        fmt.Sprintf("http://%s:%d/healthz", lanIP, gwPort),
 		startAPI:         fmt.Sprintf("http://%s:%d/api/v1/streams/start", lanIP, gwPort),
 		statusAPIExample: fmt.Sprintf("http://%s:%d/api/v1/streams/<stream-id>/status", lanIP, gwPort),
 		stopAPIExample:   fmt.Sprintf("http://%s:%d/api/v1/streams/<stream-id>/stop", lanIP, gwPort),
 		rtmpPublishLocal: fmt.Sprintf("rtmp://127.0.0.1:%d/live/stream001", rtmpPort),
 		rtmpPublishLAN:   fmt.Sprintf("rtmp://%s:%d/live/stream001", lanIP, rtmpPort),
+		rtmpPublishPub:   fmt.Sprintf("rtmp://%s:%d/live/stream001", info.Public.Host, rtmpPort),
 		httpFlvPlayLocal: fmt.Sprintf("http://127.0.0.1:%d/live/stream001.flv", httpPort),
 		httpFlvPlayLAN:   fmt.Sprintf("http://%s:%d/live/stream001.flv", lanIP, httpPort),
+		httpFlvPlayPub:   fmt.Sprintf("http://%s:%d/live/stream001.flv", info.Public.Host, httpPort),
 	}
+}
+
+func resolvePublicHost(flagValue, envValue string) (string, string) {
+	if host := strings.TrimSpace(flagValue); host != "" {
+		return host, "flag(--public-host)"
+	}
+	if host := strings.TrimSpace(envValue); host != "" {
+		return host, "env(SERVICE_PUBLIC_HOST)"
+	}
+	return "", ""
 }
 
 func printAlignedPairs(pairs [][2]string) {
