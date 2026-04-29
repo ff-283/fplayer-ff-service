@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"errors"
+	"flag"
 	"fmt"
 	"io"
 	"net"
@@ -68,7 +69,10 @@ type childProcs struct {
 	gwErr   io.Closer
 }
 
+var publicHostFlag = flag.String("public-host", "", "Public host/IP used by gateway to generate play URLs")
+
 func main() {
+	flag.Parse()
 	layout, err := detectLayout()
 	if err != nil {
 		fmt.Printf("Layout error: %v\n", err)
@@ -344,6 +348,9 @@ func startCore(layout serviceLayout) (childProcs, runtimeInfo, error) {
 			fmt.Sprintf("SERVICE_GATEWAY_PORT=%d", candidate),
 			fmt.Sprintf("SERVICE_LOG_DIR=%s", layout.LogDir),
 		)
+		if host := strings.TrimSpace(*publicHostFlag); host != "" {
+			cmd.Env = append(cmd.Env, fmt.Sprintf("SERVICE_PUBLIC_HOST=%s", host))
+		}
 		if e = cmd.Start(); e != nil {
 			_ = tmpOut.Close()
 			_ = tmpErr.Close()

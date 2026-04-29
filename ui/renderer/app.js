@@ -1,4 +1,6 @@
 const elGateway = document.getElementById("gatewayUrl");
+const elPublicProxyEnabled = document.getElementById("publicProxyEnabled");
+const elPublicHost = document.getElementById("publicHost");
 const elApp = document.getElementById("appName");
 const elStream = document.getElementById("streamName");
 const elServiceMode = document.getElementById("serviceMode");
@@ -44,6 +46,53 @@ if (window.nativeBridge?.getDefaultGatewayUrl) {
     }
   }).catch(() => {});
 }
+
+const PUBLIC_PROXY_ENABLED_KEY = "ffservice.publicProxyEnabled";
+const PUBLIC_HOST_KEY = "ffservice.publicHost";
+
+if (elPublicProxyEnabled) {
+  const storedEnabled = localStorage.getItem(PUBLIC_PROXY_ENABLED_KEY);
+  elPublicProxyEnabled.checked = storedEnabled === "1";
+}
+if (elPublicHost) {
+  const storedHost = localStorage.getItem(PUBLIC_HOST_KEY);
+  if (storedHost) {
+    elPublicHost.value = storedHost;
+  }
+}
+
+function normalizePublicHostInput(raw) {
+  let v = String(raw || "").trim();
+  if (!v) return "";
+  v = v.replace(/^[a-z]+:\/\//i, "");
+  v = v.split(/[/?#]/)[0];
+  if (v.startsWith("[") && v.endsWith("]")) {
+    v = v.slice(1, -1);
+  }
+  if (v.includes(":") && v.split(":").length === 2) {
+    v = v.split(":")[0];
+  }
+  return v.trim();
+}
+
+function syncPublicProxyControls() {
+  if (!elPublicProxyEnabled || !elPublicHost) {
+    return;
+  }
+  const enabled = !!elPublicProxyEnabled.checked;
+  elPublicHost.disabled = !enabled;
+}
+
+elPublicProxyEnabled?.addEventListener("change", () => {
+  syncPublicProxyControls();
+  localStorage.setItem(PUBLIC_PROXY_ENABLED_KEY, elPublicProxyEnabled.checked ? "1" : "0");
+});
+
+elPublicHost?.addEventListener("change", () => {
+  localStorage.setItem(PUBLIC_HOST_KEY, String(elPublicHost.value || "").trim());
+});
+
+syncPublicProxyControls();
 
 function setResult(text) {
   elResult.textContent = text;
@@ -196,10 +245,15 @@ async function startStream() {
     app: elApp.value.trim(),
     stream: elStream.value.trim(),
     serviceMode: elServiceMode.value,
+    publicProxyEnabled: !!elPublicProxyEnabled?.checked,
+    publicHost: normalizePublicHostInput(elPublicHost?.value || ""),
     publisherMeta: {
       source: "electron-ui"
     }
   };
+  if (payload.publicProxyEnabled && !payload.publicHost) {
+    throw new Error("已启用公网代理，请填写公网播放主机。");
+  }
   const resp = await fetch(`${base}/api/v1/streams/start`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },

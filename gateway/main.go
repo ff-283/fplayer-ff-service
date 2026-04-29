@@ -38,11 +38,13 @@ type streamRecord struct {
 }
 
 type startRequest struct {
-	App           string         `json:"app"`
-	Stream        string         `json:"stream"`
-	ServiceMode   string         `json:"serviceMode"`
-	PublisherMeta map[string]any `json:"publisherMeta"`
-	SourceMeta    map[string]any `json:"sourceMeta"`
+	App                string         `json:"app"`
+	Stream             string         `json:"stream"`
+	ServiceMode        string         `json:"serviceMode"`
+	PublisherMeta      map[string]any `json:"publisherMeta"`
+	SourceMeta         map[string]any `json:"sourceMeta"`
+	PublicProxyEnabled *bool          `json:"publicProxyEnabled,omitempty"`
+	PublicHost         string         `json:"publicHost,omitempty"`
 }
 
 type startResponse struct {
@@ -72,16 +74,23 @@ type statusResponse struct {
 
 var (
 	mu                  sync.RWMutex
+	publicHostMu        sync.RWMutex
 	streams             = map[string]*streamRecord{}
 	rtmpPort            = getEnvInt("ZLM_RTMP_PORT", 1935)
 	httpPort            = getEnvInt("ZLM_HTTP_PORT", 8080)
 	gatewayPort         = getEnvInt("SERVICE_GATEWAY_PORT", 9000)
 	ipRoundRobin        uint32
 	selectedPublishHost string
+	publicHostOverride  string
+	publicProxyEnabled  bool
 )
 
 func main() {
 	log.SetOutput(os.Stdout)
+	if envHost := normalizePublicHost(os.Getenv("SERVICE_PUBLIC_HOST")); envHost != "" {
+		setPublicHostOverride(envHost, true)
+		log.Printf(">>> [PUBLIC-HOST][ENV] enabled host=%s", envHost)
+	}
 	selectedPublishHost = initPublishHostAtStartup()
 	mux := http.NewServeMux()
 	mux.HandleFunc("/healthz", healthzHandler)
@@ -128,6 +137,18 @@ func startHandler(w http.ResponseWriter, r *http.Request) {
 	if serviceMode == "" {
 		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "serviceMode must be one of direct|broadcast|httpflv"})
 		return
+	}
+	if req.PublicProxyEnabled != nil {
+		if *req.PublicProxyEnabled {
+			host := normalizePublicHost(req.PublicHost)
+			if host == "" {
+				writeJSON(w, http.StatusBadRequest, map[string]string{"error": "publicHost is required when publicProxyEnabled=true"})
+				return
+			}
+			setPublicHostOverride(host, true)
+		} else {
+			setPublicHostOverride("", false)
+		}
 	}
 
 	id, err := randomID()
@@ -345,11 +366,14 @@ func networkDebugHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{
-		"publishHost": selectedPublishHost,
-		"gatewayPort": gatewayPort,
-		"rtmpPort":    rtmpPort,
-		"httpPort":    httpPort,
-		"os":          runtime.GOOS,
+		"publishHost":         publishHostForResponse(r),
+		"selectedPublishHost": selectedPublishHost,
+		"publicProxyEnabled":  getPublicProxyEnabled(),
+		"publicHost":          getPublicHostOverride(),
+		"gatewayPort":         gatewayPort,
+		"rtmpPort":            rtmpPort,
+		"httpPort":            httpPort,
+		"os":                  runtime.GOOS,
 	})
 }
 
@@ -459,10 +483,67 @@ func localIPv4() string {
 }
 
 func publishHostForResponse(r *http.Request) string {
+	if getPublicProxyEnabled() {
+		override := getPublicHostOverride()
+		if strings.TrimSpace(override) != "" {
+			return strings.TrimSpace(override)
+		}
+	}
 	if strings.TrimSpace(selectedPublishHost) != "" {
 		return strings.TrimSpace(selectedPublishHost)
 	}
 	return responseHostFallback(r)
+}
+
+func setPublicHostOverride(host string, enabled bool) {
+	publicHostMu.Lock()
+	defer publicHostMu.Unlock()
+	if enabled {
+		publicHostOverride = host
+		publicProxyEnabled = true
+		log.Printf(">>> [PUBLIC-HOST][SET] enabled host=%s", host)
+		return
+	}
+	publicHostOverride = ""
+	publicProxyEnabled = false
+	log.Printf(">>> [PUBLIC-HOST][SET] disabled, fallback to auto host select")
+}
+
+func getPublicHostOverride() string {
+	publicHostMu.RLock()
+	defer publicHostMu.RUnlock()
+	return publicHostOverride
+}
+
+func getPublicProxyEnabled() bool {
+	publicHostMu.RLock()
+	defer publicHostMu.RUnlock()
+	return publicProxyEnabled
+}
+
+func normalizePublicHost(raw string) string {
+	s := strings.TrimSpace(raw)
+	if s == "" {
+		return ""
+	}
+	if strings.Contains(s, "://") {
+		if idx := strings.Index(s, "://"); idx >= 0 {
+			s = s[idx+3:]
+		}
+	}
+	if idx := strings.IndexAny(s, "/?#"); idx >= 0 {
+		s = s[:idx]
+	}
+	if h, _, err := net.SplitHostPort(s); err == nil && strings.TrimSpace(h) != "" {
+		s = strings.TrimSpace(h)
+	}
+	if strings.HasPrefix(s, "[") && strings.HasSuffix(s, "]") {
+		s = strings.TrimSuffix(strings.TrimPrefix(s, "["), "]")
+	}
+	if idx := strings.LastIndex(s, ":"); idx > 0 && strings.Count(s, ":") == 1 {
+		s = s[:idx]
+	}
+	return strings.TrimSpace(s)
 }
 
 func responseHostFallback(r *http.Request) string {
