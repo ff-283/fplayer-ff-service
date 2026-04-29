@@ -7,7 +7,8 @@
   "scripts": {
     "start": "electron .",
     "pack:dir": "electron-builder --dir",
-    "dist:win": "electron-builder --win portable"
+    "dist:win": "electron-builder --win portable",
+    "dist:linux": "electron-builder --linux AppImage --x64"
   },
   "devDependencies": {
     "electron": "^31.0.0",
@@ -36,6 +37,10 @@
         "to": "gateway/bin"
       },
       {
+        "from": "../kernel-console/bin",
+        "to": "kernel-console/bin"
+      },
+      {
         "from": "../doc/img",
         "to": "doc/img"
       }
@@ -44,6 +49,12 @@
       "icon": "../doc/img/icon.png",
       "target": [
         "portable"
+      ]
+    },
+    "linux": {
+      "category": "AudioVideo",
+      "target": [
+        "AppImage"
       ]
     }
   }

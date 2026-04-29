@@ -11,6 +11,7 @@ import (
 	"os/exec"
 	"os/signal"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"syscall"
 	"time"
@@ -18,8 +19,8 @@ import (
 
 type runtimeInfo struct {
 	StartedAt string `json:"startedAt"`
-	Gateway struct {
-		URL string `json:"url"`
+	Gateway   struct {
+		URL  string `json:"url"`
 		Host string `json:"host"`
 		Port int    `json:"port"`
 	} `json:"gateway"`
@@ -35,16 +36,16 @@ type runtimeInfo struct {
 }
 
 type userLinks struct {
-	lanIP             string
-	gatewayURL        string
-	healthURL         string
-	startAPI          string
-	statusAPIExample  string
-	stopAPIExample    string
-	rtmpPublishLocal  string
-	rtmpPublishLAN    string
-	httpFlvPlayLocal  string
-	httpFlvPlayLAN    string
+	lanIP            string
+	gatewayURL       string
+	healthURL        string
+	startAPI         string
+	statusAPIExample string
+	stopAPIExample   string
+	rtmpPublishLocal string
+	rtmpPublishLAN   string
+	httpFlvPlayLocal string
+	httpFlvPlayLAN   string
 }
 
 type serviceLayout struct {
@@ -115,13 +116,30 @@ func detectLayout() (serviceLayout, error) {
 	for _, c := range candidates {
 		root := filepath.Clean(c)
 		if isServiceRoot(root) {
+			isWin := runtime.GOOS == "windows"
+			zlmBase := filepath.Join(root, "3rd", "zlm")
+			zlmDir := filepath.Join(zlmBase, "windows")
+			if !isWin {
+				if _, err := os.Stat(filepath.Join(zlmBase, "linux")); err == nil {
+					zlmDir = filepath.Join(zlmBase, "linux")
+				} else if _, err := os.Stat(filepath.Join(zlmBase, "Linux")); err == nil {
+					zlmDir = filepath.Join(zlmBase, "Linux")
+				}
+			}
+			gatewayName := "gateway"
+			zlmExeName := "MediaServer"
+			if isWin {
+				gatewayName = "gateway.exe"
+				zlmExeName = "MediaServer.exe"
+			}
+
 			layout.RootDir = root
 			layout.RunDir = filepath.Join(root, "run")
 			layout.LogDir = filepath.Join(root, "logs")
-			layout.ZLMExe = filepath.Join(root, "3rd", "zlm", "windows", "MediaServer.exe")
-			layout.ZLMCfg = filepath.Join(root, "3rd", "zlm", "windows", "config.ini")
+			layout.ZLMExe = filepath.Join(zlmDir, zlmExeName)
+			layout.ZLMCfg = filepath.Join(zlmDir, "config.ini")
 			layout.ZLMRuntimeCfg = filepath.Join(layout.RunDir, "zlm.runtime.ini")
-			layout.GatewayExe = filepath.Join(root, "gateway", "bin", "gateway.exe")
+			layout.GatewayExe = filepath.Join(root, "gateway", "bin", gatewayName)
 			layout.GatewayDir = filepath.Join(root, "gateway")
 			return layout, nil
 		}
@@ -130,9 +148,30 @@ func detectLayout() (serviceLayout, error) {
 }
 
 func isServiceRoot(root string) bool {
+	isWin := runtime.GOOS == "windows"
+	gatewayName := "gateway"
+	zlmCandidates := []string{
+		filepath.Join(root, "3rd", "zlm", "linux", "MediaServer"),
+		filepath.Join(root, "3rd", "zlm", "Linux", "MediaServer"),
+	}
+	if isWin {
+		gatewayName = "gateway.exe"
+		zlmCandidates = []string{filepath.Join(root, "3rd", "zlm", "windows", "MediaServer.exe")}
+	}
+
+	zlmOK := false
+	for _, p := range zlmCandidates {
+		if _, err := os.Stat(p); err == nil {
+			zlmOK = true
+			break
+		}
+	}
+	if !zlmOK {
+		return false
+	}
+
 	checks := []string{
-		filepath.Join(root, "3rd", "zlm", "windows", "MediaServer.exe"),
-		filepath.Join(root, "gateway", "bin", "gateway.exe"),
+		filepath.Join(root, "gateway", "bin", gatewayName),
 		filepath.Join(root, "scripts"),
 	}
 	for _, p := range checks {
@@ -168,7 +207,7 @@ func getFreePort(preferred int) int {
 	return try(0)
 }
 
-func patchConfig(templatePath, targetPath string, rtmpPort, httpPort, httpsPort int) error {
+func patchConfig(templatePath, targetPath string, rtmpPort, httpPort, httpsPort int, rtspPort int) error {
 	raw, err := os.ReadFile(templatePath)
 	if err != nil {
 		return err
@@ -191,6 +230,9 @@ func patchConfig(templatePath, targetPath string, rtmpPort, httpPort, httpsPort 
 	replace("http", "port", httpPort)
 	replace("http", "sslport", httpsPort)
 	replace("rtmp", "port", rtmpPort)
+	if rtspPort > 0 {
+		replace("rtsp", "port", rtspPort)
+	}
 	return os.WriteFile(targetPath, []byte(strings.Join(lines, "\n")), 0o644)
 }
 
@@ -239,11 +281,19 @@ func startCore(layout serviceLayout) (childProcs, runtimeInfo, error) {
 	rtmpPort := getFreePort(1935)
 	httpPort := getFreePort(8080)
 	httpsPort := getFreePort(8443)
+	rtspPort := 0
+	if runtime.GOOS == "linux" {
+		rtspPort = getFreePort(8554)
+	}
 	if rtmpPort == 0 || httpPort == 0 || httpsPort == 0 {
 		return procs, info, errors.New("failed to allocate dynamic ports")
 	}
-	fmt.Printf("Selected ports => rtmp:%d http:%d https:%d\n", rtmpPort, httpPort, httpsPort)
-	if err := patchConfig(layout.ZLMCfg, layout.ZLMRuntimeCfg, rtmpPort, httpPort, httpsPort); err != nil {
+	fmt.Printf("Selected ports => rtmp:%d http:%d https:%d", rtmpPort, httpPort, httpsPort)
+	if rtspPort > 0 {
+		fmt.Printf(" rtsp:%d", rtspPort)
+	}
+	fmt.Println("")
+	if err := patchConfig(layout.ZLMCfg, layout.ZLMRuntimeCfg, rtmpPort, httpPort, httpsPort, rtspPort); err != nil {
 		return procs, info, err
 	}
 	fmt.Printf("Generated runtime config: %s\n", layout.ZLMRuntimeCfg)

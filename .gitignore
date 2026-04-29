@@ -6,11 +6,17 @@
 /kernel-console/bin/
 /kernel-console/*.exe
 /3rd/zlm/windows/log/
+/3rd/zlm/Linux/log/
+/3rd/zlm/linux/log/
 /.idea/
 /ui/node_modules/
 /ui/.cache/
 /ui/.webpack/
 /ui/out/
+# Linux 桌面/运行时临时文件
+*.AppImage
+*.core
+core.*
 *.zip
 *.7z
 *.rar

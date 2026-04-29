@@ -9,9 +9,11 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strconv"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 )
 
@@ -23,15 +25,16 @@ const (
 )
 
 type streamRecord struct {
-	ID            string                 `json:"id"`
-	App           string                 `json:"app"`
-	Stream        string                 `json:"stream"`
-	ServiceMode   string                 `json:"serviceMode"`
-	PublisherMeta map[string]any         `json:"publisherMeta,omitempty"`
-	SourceMeta    map[string]any         `json:"sourceMeta,omitempty"`
-	CreatedAt     time.Time              `json:"createdAt"`
-	Status        streamStatus           `json:"status"`
-	PlayURLs      map[string]string      `json:"playUrls"`
+	ID            string            `json:"id"`
+	App           string            `json:"app"`
+	Stream        string            `json:"stream"`
+	PublishHost   string            `json:"publishHost"`
+	ServiceMode   string            `json:"serviceMode"`
+	PublisherMeta map[string]any    `json:"publisherMeta,omitempty"`
+	SourceMeta    map[string]any    `json:"sourceMeta,omitempty"`
+	CreatedAt     time.Time         `json:"createdAt"`
+	Status        streamStatus      `json:"status"`
+	PlayURLs      map[string]string `json:"playUrls"`
 }
 
 type startRequest struct {
@@ -43,42 +46,47 @@ type startRequest struct {
 }
 
 type startResponse struct {
-	ID          string `json:"id"`
-	App         string `json:"app"`
-	Stream      string `json:"stream"`
-	ServiceMode string `json:"serviceMode"`
-	PublishRTMP string `json:"publishRtmp"`
-	PlayHTTPFLV string `json:"playHttpFlv"`
-	PlayHLS     string `json:"playHls"`
+	ID          string            `json:"id"`
+	App         string            `json:"app"`
+	Stream      string            `json:"stream"`
+	ServiceMode string            `json:"serviceMode"`
+	PublishRTMP string            `json:"publishRtmp"`
+	PlayHTTPFLV string            `json:"playHttpFlv"`
+	PlayHLS     string            `json:"playHls"`
 	PlayURLs    map[string]string `json:"playUrls"`
 }
 
 type statusResponse struct {
-	ID          string       `json:"id"`
-	App         string       `json:"app"`
-	Stream      string       `json:"stream"`
-	ServiceMode string       `json:"serviceMode"`
-	Status      streamStatus `json:"status"`
-	PublishRTMP string      `json:"publishRtmp"`
-	PlayHTTPFLV string      `json:"playHttpFlv"`
-	PlayHLS     string      `json:"playHls"`
-	PlayURLs    map[string]string `json:"playUrls"`
-	PublisherMeta map[string]any `json:"publisherMeta,omitempty"`
-	SourceMeta map[string]any `json:"sourceMeta,omitempty"`
+	ID            string            `json:"id"`
+	App           string            `json:"app"`
+	Stream        string            `json:"stream"`
+	ServiceMode   string            `json:"serviceMode"`
+	Status        streamStatus      `json:"status"`
+	PublishRTMP   string            `json:"publishRtmp"`
+	PlayHTTPFLV   string            `json:"playHttpFlv"`
+	PlayHLS       string            `json:"playHls"`
+	PlayURLs      map[string]string `json:"playUrls"`
+	PublisherMeta map[string]any    `json:"publisherMeta,omitempty"`
+	SourceMeta    map[string]any    `json:"sourceMeta,omitempty"`
 }
 
 var (
-	mu      sync.RWMutex
-	streams = map[string]*streamRecord{}
-	rtmpPort    = getEnvInt("ZLM_RTMP_PORT", 1935)
-	httpPort    = getEnvInt("ZLM_HTTP_PORT", 8080)
-	gatewayPort = getEnvInt("SERVICE_GATEWAY_PORT", 9000)
+	mu                  sync.RWMutex
+	streams             = map[string]*streamRecord{}
+	rtmpPort            = getEnvInt("ZLM_RTMP_PORT", 1935)
+	httpPort            = getEnvInt("ZLM_HTTP_PORT", 8080)
+	gatewayPort         = getEnvInt("SERVICE_GATEWAY_PORT", 9000)
+	ipRoundRobin        uint32
+	selectedPublishHost string
 )
 
 func main() {
+	log.SetOutput(os.Stdout)
+	selectedPublishHost = initPublishHostAtStartup()
 	mux := http.NewServeMux()
 	mux.HandleFunc("/healthz", healthzHandler)
 	mux.HandleFunc("/api/v1/debug/logs", logsHandler)
+	mux.HandleFunc("/api/v1/debug/network", networkDebugHandler)
 	mux.HandleFunc("/api/v1/streams/start", startHandler)
 	mux.HandleFunc("/api/v1/streams/resolve", resolveHandler)
 	mux.HandleFunc("/api/v1/streams/", streamByIDHandler)
@@ -139,8 +147,9 @@ func startHandler(w http.ResponseWriter, r *http.Request) {
 		Status:        statusRunning,
 	}
 
-	host := localIPv4()
+	host := publishHostForResponse(r)
 	rec.PlayURLs = buildPlayURLs(host, rec.App, rec.Stream, rec.ServiceMode)
+	rec.PublishHost = host
 
 	mu.Lock()
 	streams[id] = rec
@@ -212,7 +221,10 @@ func statusHandler(w http.ResponseWriter, r *http.Request, id string) {
 		writeJSON(w, http.StatusNotFound, map[string]string{"error": "stream not found"})
 		return
 	}
-	host := localIPv4()
+	host := strings.TrimSpace(rec.PublishHost)
+	if host == "" {
+		host = publishHostForResponse(r)
+	}
 	playUrls := buildPlayURLs(host, rec.App, rec.Stream, rec.ServiceMode)
 	rec.PlayURLs = playUrls
 	writeJSON(w, http.StatusOK, statusResponse{
@@ -273,7 +285,10 @@ func resolveHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	host := localIPv4()
+	host := strings.TrimSpace(target.PublishHost)
+	if host == "" {
+		host = publishHostForResponse(r)
+	}
 	playUrls := buildPlayURLs(host, target.App, target.Stream, target.ServiceMode)
 	writeJSON(w, http.StatusOK, statusResponse{
 		ID:            target.ID,
@@ -321,6 +336,20 @@ func logsHandler(w http.ResponseWriter, r *http.Request) {
 		"ui": map[string]string{
 			"err": uiErr,
 		},
+	})
+}
+
+func networkDebugHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		writeJSON(w, http.StatusMethodNotAllowed, map[string]string{"error": "method not allowed"})
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{
+		"publishHost": selectedPublishHost,
+		"gatewayPort": gatewayPort,
+		"rtmpPort":    rtmpPort,
+		"httpPort":    httpPort,
+		"os":          runtime.GOOS,
 	})
 }
 
@@ -427,4 +456,302 @@ func localIPv4() string {
 		}
 	}
 	return "127.0.0.1"
+}
+
+func publishHostForResponse(r *http.Request) string {
+	if strings.TrimSpace(selectedPublishHost) != "" {
+		return strings.TrimSpace(selectedPublishHost)
+	}
+	return responseHostFallback(r)
+}
+
+func responseHostFallback(r *http.Request) string {
+	if runtime.GOOS == "linux" {
+		if host := pickLinuxReachableHost(r); host != "" {
+			log.Printf("[host-select] final selected host=%s (linux reachable strategy)", host)
+			return host
+		}
+		log.Printf("[host-select] linux reachable strategy found no suitable host, fallback to generic strategy")
+	}
+
+	raw := strings.TrimSpace(r.Host)
+	if forwarded := strings.TrimSpace(r.Header.Get("X-Forwarded-Host")); forwarded != "" {
+		parts := strings.Split(forwarded, ",")
+		if len(parts) > 0 && strings.TrimSpace(parts[0]) != "" {
+			raw = strings.TrimSpace(parts[0])
+		}
+	}
+	if raw == "" {
+		return localIPv4()
+	}
+	if h, _, err := net.SplitHostPort(raw); err == nil && strings.TrimSpace(h) != "" {
+		return strings.TrimSpace(h)
+	}
+	if strings.HasPrefix(raw, "[") && strings.HasSuffix(raw, "]") {
+		return strings.TrimSuffix(strings.TrimPrefix(raw, "["), "]")
+	}
+	if idx := strings.LastIndex(raw, ":"); idx > 0 {
+		return raw[:idx]
+	}
+	return raw
+}
+
+func initPublishHostAtStartup() string {
+	if runtime.GOOS != "linux" {
+		host := localIPv4()
+		log.Printf("=== [HOST-SELECT][BOOT] os=%s host=%s (default localIPv4) ===", runtime.GOOS, host)
+		return host
+	}
+	host := pickLinuxReachableHostAtStartup()
+	if strings.TrimSpace(host) == "" {
+		host = localIPv4()
+	}
+	log.Printf("============================================================")
+	log.Printf(">>> [HOST-SELECT][BOOT][FINAL] publish host = %s", host)
+	log.Printf(">>> [HOST-SELECT][BOOT][INFO ] gateway=%d rtmp=%d http=%d", gatewayPort, rtmpPort, httpPort)
+	log.Printf("============================================================")
+	return host
+}
+
+func pickLinuxReachableHostAtStartup() string {
+	candidates := localIPv4Candidates()
+	log.Printf("[host-select][boot] linux candidates=%v", candidates)
+	if len(candidates) == 0 {
+		log.Printf("[host-select][boot] no candidates")
+		return ""
+	}
+	start := int(atomic.AddUint32(&ipRoundRobin, 1)-1) % len(candidates)
+	log.Printf("[host-select][boot] round-robin start=%d", start)
+	for i := 0; i < len(candidates); i++ {
+		idx := (start + i) % len(candidates)
+		host := candidates[idx]
+		log.Printf("[host-select][boot] probe candidate=%s", host)
+		if canReachMediaOnStartup(host) {
+			log.Printf("*** [host-select][boot] selected=%s", host)
+			return host
+		}
+		log.Printf("[host-select][boot] rejected=%s", host)
+	}
+	log.Printf("[host-select][boot] all candidates rejected")
+	return ""
+}
+
+func canReachMediaOnStartup(host string) bool {
+	// Startup phase happens before gateway/ZLM begin listening.
+	// Probe bindability of candidate IP instead of probing service ports.
+	if !canBindLocalIP(host, "boot-bind") {
+		return false
+	}
+	return true
+}
+
+func canBindLocalIP(host string, name string) bool {
+	addr := net.JoinHostPort(host, "0")
+	log.Printf("[host-select] bind probe begin service=%s addr=%s", name, addr)
+	ln, err := net.Listen("tcp", addr)
+	if err != nil {
+		log.Printf("[host-select] bind probe fail service=%s addr=%s err=%v", name, addr, err)
+		return false
+	}
+	_ = ln.Close()
+	log.Printf("[host-select] bind probe ok service=%s addr=%s", name, addr)
+	return true
+}
+
+func pickLinuxReachableHost(r *http.Request) string {
+	candidates := localIPv4Candidates()
+	log.Printf("[host-select] linux candidates=%v", candidates)
+	if len(candidates) == 0 {
+		log.Printf("[host-select] no linux ipv4 candidates")
+		return ""
+	}
+
+	clientIP := requestClientIP(r)
+	if clientIP != nil {
+		log.Printf("[host-select] client ip=%s", clientIP.String())
+	} else {
+		log.Printf("[host-select] client ip unavailable")
+	}
+	if clientIP != nil {
+		if byRoute := routePreferredLocalIP(clientIP); byRoute != "" && isUsableIPv4(byRoute) {
+			log.Printf("[host-select] route preferred local ip candidate=%s", byRoute)
+			if canReachLocalService(byRoute) {
+				log.Printf("[host-select] selected route preferred ip=%s", byRoute)
+				return byRoute
+			}
+			log.Printf("[host-select] route preferred ip unreachable=%s", byRoute)
+		}
+
+		sameSubnet := make([]string, 0, len(candidates))
+		for _, c := range candidates {
+			if same24Subnet(clientIP.String(), c) {
+				sameSubnet = append(sameSubnet, c)
+			}
+		}
+		log.Printf("[host-select] same /24 subnet candidates=%v", sameSubnet)
+		if host := pickRoundRobinReachable(sameSubnet); host != "" {
+			log.Printf("[host-select] selected same-subnet host=%s", host)
+			return host
+		}
+		log.Printf("[host-select] no same-subnet host passed reachability probe")
+	}
+
+	log.Printf("[host-select] fallback to all candidates round-robin probing")
+	return pickRoundRobinReachable(candidates)
+}
+
+func pickRoundRobinReachable(candidates []string) string {
+	if len(candidates) == 0 {
+		log.Printf("[host-select] round-robin skipped, empty candidate list")
+		return ""
+	}
+	start := int(atomic.AddUint32(&ipRoundRobin, 1)-1) % len(candidates)
+	log.Printf("[host-select] round-robin start index=%d candidates=%v", start, candidates)
+	for i := 0; i < len(candidates); i++ {
+		idx := (start + i) % len(candidates)
+		host := candidates[idx]
+		log.Printf("[host-select] probing host=%s", host)
+		if canReachLocalService(host) {
+			log.Printf("[host-select] host probe passed=%s", host)
+			return host
+		}
+		log.Printf("[host-select] host probe failed=%s", host)
+	}
+	log.Printf("[host-select] all host probes failed")
+	return ""
+}
+
+func canReachLocalService(host string) bool {
+	if !tcpReachable(host, gatewayPort, 300*time.Millisecond, "gateway") {
+		return false
+	}
+	if rtmpPort > 0 && !tcpReachable(host, rtmpPort, 300*time.Millisecond, "rtmp") {
+		return false
+	}
+	return true
+}
+
+func tcpReachable(host string, port int, timeout time.Duration, name string) bool {
+	addr := net.JoinHostPort(host, strconv.Itoa(port))
+	log.Printf("[host-select] tcp probe begin service=%s addr=%s timeout=%s", name, addr, timeout)
+	conn, err := net.DialTimeout("tcp", addr, timeout)
+	if err != nil {
+		log.Printf("[host-select] tcp probe fail service=%s addr=%s err=%v", name, addr, err)
+		return false
+	}
+	_ = conn.Close()
+	log.Printf("[host-select] tcp probe ok service=%s addr=%s", name, addr)
+	return true
+}
+
+func localIPv4Candidates() []string {
+	ifaces, err := net.Interfaces()
+	if err != nil {
+		return nil
+	}
+	result := make([]string, 0, 4)
+	seen := map[string]struct{}{}
+	for _, iface := range ifaces {
+		if iface.Flags&net.FlagUp == 0 || iface.Flags&net.FlagLoopback != 0 {
+			continue
+		}
+		addrs, err := iface.Addrs()
+		if err != nil {
+			continue
+		}
+		for _, addr := range addrs {
+			ipNet, ok := addr.(*net.IPNet)
+			if !ok || ipNet.IP == nil {
+				continue
+			}
+			ip := ipNet.IP.To4()
+			if ip == nil {
+				continue
+			}
+			s := ip.String()
+			if !isUsableIPv4(s) {
+				continue
+			}
+			if _, ok := seen[s]; ok {
+				continue
+			}
+			seen[s] = struct{}{}
+			result = append(result, s)
+		}
+	}
+	return result
+}
+
+func isUsableIPv4(ip string) bool {
+	if strings.TrimSpace(ip) == "" {
+		return false
+	}
+	if strings.HasPrefix(ip, "127.") {
+		return false
+	}
+	if strings.HasPrefix(ip, "169.254.") {
+		return false
+	}
+	return true
+}
+
+func requestClientIP(r *http.Request) net.IP {
+	if r == nil {
+		return nil
+	}
+	if xff := strings.TrimSpace(r.Header.Get("X-Forwarded-For")); xff != "" {
+		parts := strings.Split(xff, ",")
+		if len(parts) > 0 {
+			if ip := net.ParseIP(strings.TrimSpace(parts[0])); ip != nil {
+				return ip.To4()
+			}
+		}
+	}
+	host, _, err := net.SplitHostPort(strings.TrimSpace(r.RemoteAddr))
+	if err != nil {
+		return nil
+	}
+	ip := net.ParseIP(host)
+	if ip == nil {
+		return nil
+	}
+	return ip.To4()
+}
+
+func routePreferredLocalIP(remote net.IP) string {
+	if remote == nil {
+		return ""
+	}
+	conn, err := net.DialTimeout("udp", net.JoinHostPort(remote.String(), "53"), 300*time.Millisecond)
+	if err != nil {
+		return ""
+	}
+	defer conn.Close()
+	localAddr, ok := conn.LocalAddr().(*net.UDPAddr)
+	if !ok || localAddr == nil || localAddr.IP == nil {
+		return ""
+	}
+	ip := localAddr.IP.To4()
+	if ip == nil {
+		return ""
+	}
+	s := ip.String()
+	if !isUsableIPv4(s) {
+		return ""
+	}
+	return s
+}
+
+func same24Subnet(a, b string) bool {
+	pa := net.ParseIP(strings.TrimSpace(a))
+	pb := net.ParseIP(strings.TrimSpace(b))
+	if pa == nil || pb == nil {
+		return false
+	}
+	a4 := pa.To4()
+	b4 := pb.To4()
+	if a4 == nil || b4 == nil {
+		return false
+	}
+	return a4[0] == b4[0] && a4[1] == b4[1] && a4[2] == b4[2]
 }

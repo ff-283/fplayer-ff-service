@@ -189,7 +189,7 @@ function renderCurrent() {
 
 async function startStream() {
   if (!startupReady) {
-    throw new Error("服务尚未就绪，请稍候。");
+    await ensureServiceReady();
   }
   const base = elGateway.value.trim().replace(/\/+$/, "");
   const payload = {
@@ -211,6 +211,32 @@ async function startStream() {
   current = await resp.json();
   current.status = "running";
   renderCurrent();
+}
+
+async function ensureServiceReady() {
+  if (startupReady) {
+    return;
+  }
+  if (!window.nativeBridge?.startServiceCore) {
+    throw new Error("服务尚未就绪，请稍候。");
+  }
+  const ret = await window.nativeBridge.startServiceCore();
+  if (!ret?.ok) {
+    throw new Error(ret?.message || "启动服务失败");
+  }
+  const deadline = Date.now() + 12000;
+  while (Date.now() < deadline) {
+    const status = await window.nativeBridge.getStartupStatus();
+    setStartupStatus(status?.state, status?.message || "状态未知");
+    if (status?.state === "ready") {
+      return;
+    }
+    if (status?.state === "failed") {
+      throw new Error(status?.message || "服务启动失败");
+    }
+    await new Promise((resolve) => setTimeout(resolve, 300));
+  }
+  throw new Error("服务启动超时，请查看日志。");
 }
 
 async function queryStatus() {

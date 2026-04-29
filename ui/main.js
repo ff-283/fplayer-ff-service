@@ -15,6 +15,28 @@ let coreStartupStatus = {
   message: "未启动"
 };
 
+function getPlatformRuntimeLayout() {
+  const isWin = process.platform === "win32";
+  return {
+    zlmPlatformDirCandidates: isWin ? ["windows"] : ["linux", "Linux"],
+    zlmExecutable: isWin ? "MediaServer.exe" : "MediaServer",
+    gatewayExecutable: isWin ? "gateway.exe" : "gateway",
+    scriptExt: isWin ? ".ps1" : ".sh",
+    scriptRunner: isWin ? "powershell" : "bash",
+    scriptRunnerArgs: isWin ? ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File"] : []
+  };
+}
+
+function resolveZlmDir(rootDir, runtimeLayout) {
+  for (const dirName of runtimeLayout.zlmPlatformDirCandidates) {
+    const candidate = path.join(rootDir, "3rd", "zlm", dirName);
+    if (fs.existsSync(candidate)) {
+      return candidate;
+    }
+  }
+  return path.join(rootDir, "3rd", "zlm", runtimeLayout.zlmPlatformDirCandidates[0]);
+}
+
 function getServiceRootDir() {
   if (app.isPackaged) {
     const exeDir = path.dirname(process.execPath);
@@ -127,6 +149,20 @@ async function waitGatewayHealthy(port, timeoutMs = 5000) {
   return false;
 }
 
+async function queryGatewayPublishHost(port, timeoutMs = 1500) {
+  try {
+    const resp = await httpGetJson(`http://127.0.0.1:${port}/api/v1/debug/network`, timeoutMs);
+    if (resp.statusCode !== 200) {
+      return null;
+    }
+    const parsed = JSON.parse(resp.body || "{}");
+    const host = typeof parsed.publishHost === "string" ? parsed.publishHost.trim() : "";
+    return host || null;
+  } catch (_) {
+    return null;
+  }
+}
+
 function getFreePort(preferredPort = 0) {
   return new Promise((resolve) => {
     const tryPort = (port) => {
@@ -170,6 +206,9 @@ function updateZlmConfig(templatePath, targetPath, ports) {
   patchKey("http", "port", ports.httpPort);
   patchKey("http", "sslport", ports.httpsPort);
   patchKey("rtmp", "port", ports.rtmpPort);
+  if (typeof ports.rtspPort === "number" && ports.rtspPort > 0) {
+    patchKey("rtsp", "port", ports.rtspPort);
+  }
   fs.writeFileSync(targetPath, lines.join("\n"), "utf8");
 }
 
@@ -202,15 +241,23 @@ function stopManagedCoreInternal() {
 async function startManagedCoreInternal() {
   coreStartupStatus = { state: "starting", message: "正在启动 ZLM 与 gateway..." };
   const { rootDir, runDir, logDir } = getManagedPaths();
-  const zlmDir = path.join(rootDir, "3rd", "zlm", "windows");
-  const zlmExe = path.join(zlmDir, "MediaServer.exe");
+  const runtimeLayout = getPlatformRuntimeLayout();
+  const zlmDir = resolveZlmDir(rootDir, runtimeLayout);
+  const zlmExe = path.join(zlmDir, runtimeLayout.zlmExecutable);
   const zlmCfg = path.join(zlmDir, "config.ini");
   const zlmRuntimeCfg = path.join(runDir, "zlm.runtime.ini");
   const gatewayDir = path.join(rootDir, "gateway");
-  const gatewayExe = path.join(gatewayDir, "bin", "gateway.exe");
+  const gatewayExe = path.join(gatewayDir, "bin", runtimeLayout.gatewayExecutable);
 
   if (!fs.existsSync(zlmExe) || !fs.existsSync(zlmCfg)) {
     throw new Error("ZLM runtime files are missing.");
+  }
+  if (process.platform !== "win32") {
+    try {
+      fs.chmodSync(zlmExe, 0o755);
+    } catch (_) {
+      throw new Error(`failed to set execute permission: ${zlmExe}`);
+    }
   }
   if (!fs.existsSync(gatewayExe)) {
     throw new Error("gateway/bin/gateway.exe is missing.");
@@ -219,7 +266,11 @@ async function startManagedCoreInternal() {
   const rtmpPort = (await getFreePort(1935)) || (await getFreePort(0));
   const httpPort = (await getFreePort(8080)) || (await getFreePort(0));
   const httpsPort = (await getFreePort(8443)) || (await getFreePort(0));
-  updateZlmConfig(zlmCfg, zlmRuntimeCfg, { rtmpPort, httpPort, httpsPort });
+  const runtimePorts = { rtmpPort, httpPort, httpsPort };
+  if (process.platform === "linux") {
+    runtimePorts.rtspPort = (await getFreePort(8554)) || (await getFreePort(0));
+  }
+  updateZlmConfig(zlmCfg, zlmRuntimeCfg, runtimePorts);
 
   const zlm = spawnWithLogs(
     zlmExe,
@@ -275,7 +326,8 @@ async function startManagedCoreInternal() {
   writePidFile(runDir, "gateway", gateway.pid);
   writePidFile(runDir, "ui", process.pid);
 
-  const lanHost = getLanIpv4();
+  const publishHost = await queryGatewayPublishHost(gatewayPort, 1500);
+  const lanHost = publishHost || getLanIpv4();
   const runtime = {
     startedAt: new Date().toISOString().slice(0, 19),
     gateway: {
@@ -286,7 +338,8 @@ async function startManagedCoreInternal() {
     zlm: {
       rtmpPort,
       httpPort,
-      httpsPort
+      httpsPort,
+      ...(runtimePorts.rtspPort ? { rtspPort: runtimePorts.rtspPort } : {})
     },
     endpoints: {
       publishRtmp: `rtmp://127.0.0.1:${rtmpPort}/live/stream001`,
@@ -299,11 +352,12 @@ async function startManagedCoreInternal() {
 
 function startManagedCoreByScript() {
   const rootDir = getServiceRootDir();
-  const scriptPath = path.join(rootDir, "scripts", "start-all.ps1");
+  const runtimeLayout = getPlatformRuntimeLayout();
+  const scriptPath = path.join(rootDir, "scripts", `start-all${runtimeLayout.scriptExt}`);
   if (!fs.existsSync(scriptPath)) {
     return;
   }
-  const child = spawn("powershell", ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File", scriptPath], {
+  const child = spawn(runtimeLayout.scriptRunner, [...runtimeLayout.scriptRunnerArgs, scriptPath], {
     cwd: rootDir,
     detached: true,
     stdio: "ignore",
@@ -319,8 +373,9 @@ function startManagedCoreByScript() {
 
 function stopManagedCoreByScript() {
   const rootDir = getServiceRootDir();
-  const scriptPath = path.join(rootDir, "scripts", "stop-all.ps1");
-  const child = spawn("powershell", ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File", scriptPath], {
+  const runtimeLayout = getPlatformRuntimeLayout();
+  const scriptPath = path.join(rootDir, "scripts", `stop-all${runtimeLayout.scriptExt}`);
+  const child = spawn(runtimeLayout.scriptRunner, [...runtimeLayout.scriptRunnerArgs, scriptPath], {
     cwd: rootDir,
     detached: true,
     stdio: "ignore",
@@ -402,6 +457,27 @@ ipcMain.handle("service:getStartupStatus", async () => {
     return { state: "ready", message: "当前为非托管模式。" };
   }
   return coreStartupStatus;
+});
+
+ipcMain.handle("service:startServiceCore", async () => {
+  if (!managedMode) {
+    return { ok: false, message: "Not running in managed mode." };
+  }
+  if (coreStartupStatus.state === "starting" || coreStartupStatus.state === "ready") {
+    return { ok: true };
+  }
+  try {
+    coreStartupStatus = { state: "starting", message: "正在启动 ZLM 与 gateway..." };
+    if (app.isPackaged) {
+      await startManagedCoreInternal();
+    } else {
+      startManagedCoreByScript();
+    }
+    return { ok: true };
+  } catch (err) {
+    coreStartupStatus = { state: "failed", message: `启动失败：${err?.message || err}` };
+    return { ok: false, message: String(err?.message || err || "start failed") };
+  }
 });
 
 ipcMain.handle("service:stopAllAndExit", async () => {
