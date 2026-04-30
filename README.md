@@ -14,6 +14,31 @@
 > - 技术文档：`doc/技术文档-实现说明.md`
 > - Git 提交注意事项：`doc/Git提交注意事项.md`
 
+## 技术栈
+
+本项目为「媒体内核 + 网关 + 桌面控制台」组合部署形态，各层技术如下。
+
+- **媒体分发内核**：[ZLMediaKit](https://github.com/ZLMediaKit/ZLMediaKit)（随仓库 `3rd` 提供预编译 `MediaServer`），负责 RTSP/RTMP/HLS/HTTP-FLV 等协议下的推流、转封装与分发。
+- **会话与地址编排（Gateway）**：**Go 1.22+**（`gateway/`），对外提供 HTTP API（如健康检查、流地址解析 `resolve`），与 ZLM 协同完成运行期端口与播放地址编排。
+- **内核控制台启动器**：**Go**（`kernel-console/`），用于在独立控制台中拉起/管理 ZLM 与相关子进程（与一键脚本配合）。
+- **服务管理 UI**：**Electron**（`ui/`，Chromium + Node 运行时），纯前端形式的管理/控制台；使用 **electron-builder** 打包为 Windows 便携版、Linux **AppImage** 等。
+- **工程与交付**：**PowerShell / Bash** 构建与启停脚本、**Git LFS** 管理大文件；UI 侧依赖 **Node.js** 与 **npm** 安装与构建。
+
+## 功能
+
+### 本项目可独立提供的能力
+
+- **统一流媒体中枢**：内置 ZLM，承接推流、转封装与分发，输出 HLS / HTTP-FLV / RTMP / RTSP 等播放与接入能力。
+- **流地址解析与编排**：Gateway 对外提供 `resolve` 等接口，屏蔽端口动态变化与协议细节，客户端按 `app/stream` 即可获取可播放地址。
+- **服务健康与运行信息**：提供 `healthz` 健康检查与 `run/runtime.json` 运行时信息，便于联调、监控与部署排障。
+- **一键启停与跨平台发布**：支持 Windows / Linux 一键启动、停止、清理与打包，快速生成可分发的 `portable-ui`、`portable-kernel`。
+
+### 与其他项目的联合功能
+
+- **与 `fplayer-ff-desktop` 联动（扩展协同）**：desktop 可先以 P2P/直连模式独立运行；接入 service 后，service 负责会话编排、流路由与对外地址发布，扩展可管理性与多端分发能力。
+- **与 `fplayer-ff-mobile` 联动（播放消费）**：mobile 通过 Gateway 查询 `app/stream` 对应地址后直接播放，实现手机端低门槛接入，不依赖手工拼接 URL。
+- **三端协同链路**：desktop 创建并推流 -> service 生成并维护可访问地址 -> mobile/desktop 拉流播放；适用于同一局域网下的采集、分发、预览与播放闭环。
+
 ## 编译环境要求
 
 建议在 Windows 10/11 x64 或 Linux x64 环境下进行开发与打包，并确保以下工具可用：
