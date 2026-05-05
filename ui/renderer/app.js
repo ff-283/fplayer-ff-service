@@ -49,6 +49,25 @@ if (window.nativeBridge?.getDefaultGatewayUrl) {
 
 const PUBLIC_PROXY_ENABLED_KEY = "ffservice.publicProxyEnabled";
 const PUBLIC_HOST_KEY = "ffservice.publicHost";
+const THEME_KEY = "ffservice.theme";
+
+/* ── Theme Toggle ────────────────────────────────────── */
+function applyTheme(theme) {
+  document.documentElement.setAttribute("data-theme", theme);
+  localStorage.setItem(THEME_KEY, theme);
+}
+
+function initTheme() {
+  const saved = localStorage.getItem(THEME_KEY) || "light";
+  applyTheme(saved);
+}
+
+document.getElementById("themeToggle")?.addEventListener("click", () => {
+  const current = document.documentElement.getAttribute("data-theme") || "light";
+  applyTheme(current === "dark" ? "light" : "dark");
+});
+
+initTheme();
 
 if (elPublicProxyEnabled) {
   const storedEnabled = localStorage.getItem(PUBLIC_PROXY_ENABLED_KEY);

@@ -8,11 +8,26 @@
   </head>
   <body>
     <header>
-      <h1>FPlayer FF Service Console</h1>
-      <p>用于管理流地址，支持 RTMP 推流与 HTTP-FLV 播放地址生成。</p>
+      <h1>FPlayer FF Service</h1>
+      <p>RTMP 推流与 HTTP-FLV 播放地址的编排控制台</p>
     </header>
+
+    <button id="themeToggle" class="theme-toggle" title="切换深浅色主题" aria-label="切换深浅色主题">
+      <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="5"/>
+        <line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/>
+        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+        <line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/>
+        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+      </svg>
+      <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/>
+      </svg>
+    </button>
+
     <div id="copyToast" class="copy-toast" aria-live="polite"></div>
 
+    <!-- ── 创建流 ──────────────────────────────────────── -->
     <section class="panel">
       <h2>创建流</h2>
       <div class="row">
@@ -51,9 +66,9 @@
       <div class="row">
         <label for="serviceMode">服务类型</label>
         <select id="serviceMode">
-          <option value="direct">direct（直连占位，通常不用于分发）</option>
-          <option value="broadcast">broadcast（广播分发：RTMP + FLV + HLS）</option>
-          <option value="httpflv" selected>httpflv（广播分发 + HTTP-FLV 优先，含 HLS）</option>
+          <option value="direct">direct（直连占位）</option>
+          <option value="broadcast">broadcast（RTMP + FLV + HLS）</option>
+          <option value="httpflv" selected>httpflv（HTTP-FLV 优先，含 HLS）</option>
         </select>
       </div>
       <div class="actions">
@@ -62,41 +77,42 @@
       </div>
     </section>
 
+    <!-- ── 当前流信息 ──────────────────────────────────── -->
     <section class="panel">
-      <h2>当前流信息（用于调试）</h2>
+      <h2>当前流信息</h2>
       <div id="result" class="result">尚未创建流。</div>
       <div class="row">
         <label for="currentPublishRtmp">RTMP 推流地址</label>
         <div class="field-with-action">
-          <input id="currentPublishRtmp" value="" readonly placeholder="创建流后自动显示 publishRtmp" />
+          <input id="currentPublishRtmp" value="" readonly placeholder="创建流后自动显示" />
           <button id="btnCopyRtmp" disabled>复制</button>
         </div>
       </div>
       <div class="row">
         <label for="currentPlayHttpFlv">HTTP-FLV 播放地址</label>
         <div class="field-with-action">
-          <input id="currentPlayHttpFlv" value="" readonly placeholder="创建流后自动显示 playHttpFlv" />
+          <input id="currentPlayHttpFlv" value="" readonly placeholder="创建流后自动显示" />
           <button id="btnCopyFlv" disabled>复制</button>
         </div>
       </div>
       <div class="row">
         <label for="currentPlayHls">HLS 播放地址</label>
         <div class="field-with-action">
-          <input id="currentPlayHls" value="" readonly placeholder="创建流后自动显示 playHls" />
+          <input id="currentPlayHls" value="" readonly placeholder="创建流后自动显示" />
           <button id="btnCopyHls" disabled>复制</button>
         </div>
       </div>
       <div class="row">
-        <label for="mobilePlayProtocol">mobile 协议</label>
+        <label for="mobilePlayProtocol">Mobile 协议</label>
         <select id="mobilePlayProtocol">
           <option value="hls">HLS</option>
           <option value="httpFlv" selected>HTTP-FLV</option>
         </select>
       </div>
       <div class="row">
-        <label for="mobilePlayUrl">mobile 拉流地址</label>
+        <label for="mobilePlayUrl">Mobile 拉流地址</label>
         <div class="field-with-action">
-          <input id="mobilePlayUrl" value="" readonly placeholder="按所选协议自动显示播放地址" />
+          <input id="mobilePlayUrl" value="" readonly placeholder="按所选协议自动显示" />
           <button id="btnCopyMobilePlay" disabled>复制</button>
         </div>
       </div>
@@ -106,56 +122,53 @@
       </div>
     </section>
 
-    <section class="panel">
-      <h2>两端填写参考</h2>
-      <ul>
-        <li>推流端（desktop-服务端模式）：服务地址填 <code>run/runtime.json</code> 里的 <code>gateway.url</code>，app 与 stream 与本页创建流保持一致。</li>
-        <li>拉流端（desktop-服务端拉流）：服务地址同上，填写相同 app 与 stream，优先协议建议 HTTP-FLV。</li>
-        <li>若跨机器部署，请放行 <code>runtime.json</code> 中 gateway 端口及 RTMP/HTTP 端口。</li>
-      </ul>
-    </section>
+    <!-- ── 日志监视（deep green product band）────────── -->
+    <div class="dark-band">
+      <section class="panel">
+        <p class="warning-text">分辨率与帧率建议不超过 1920×1080 &amp; 60fps，防止服务端负载过高。</p>
+        <h2>日志监视</h2>
+        <div class="actions">
+          <button id="btnLogsRefresh">刷新日志</button>
+        </div>
+        <div class="row">
+          <label for="gatewayLogs">Gateway 日志</label>
+          <textarea id="gatewayLogs" class="logbox" readonly>暂无日志</textarea>
+        </div>
+        <div class="row">
+          <label for="gatewayErrLogs">Gateway 错误</label>
+          <textarea id="gatewayErrLogs" class="logbox" readonly>暂无日志</textarea>
+        </div>
+        <div class="row">
+          <label for="zlmLogs">ZLM 日志</label>
+          <textarea id="zlmLogs" class="logbox" readonly>暂无日志</textarea>
+        </div>
+        <div class="row">
+          <label for="uiErrLogs">UI 错误</label>
+          <textarea id="uiErrLogs" class="logbox" readonly>暂无日志</textarea>
+        </div>
+      </section>
+    </div>
 
-    <section class="panel">
-      <p class="warning-text">提示：推流-服务端模式下，分辨率和帧率请勿设置过高，防止服务端负载过大影响拉流稳定性。建议不要超过 1920x1080 &amp; 60fps。</p>
-      <h2>日志监视</h2>
-      <div class="actions">
-        <button id="btnLogsRefresh">刷新日志</button>
-      </div>
-      <div class="row">
-        <label for="gatewayLogs">Gateway 日志</label>
-        <textarea id="gatewayLogs" class="logbox" readonly>暂无日志</textarea>
-      </div>
-      <div class="row">
-        <label for="gatewayErrLogs">Gateway 错误</label>
-        <textarea id="gatewayErrLogs" class="logbox" readonly>暂无日志</textarea>
-      </div>
-      <div class="row">
-        <label for="zlmLogs">ZLM 日志</label>
-        <textarea id="zlmLogs" class="logbox" readonly>暂无日志</textarea>
-      </div>
-      <div class="row">
-        <label for="uiErrLogs">UI 错误</label>
-        <textarea id="uiErrLogs" class="logbox" readonly>暂无日志</textarea>
-      </div>
-    </section>
-
-    <section class="panel">
-      <h2>提示</h2>
-      <p>完整链路（服务端模式）是这样：</p>
-      <p>1) 推流端（desktop）先向 gateway 发 HTTP API 请求</p>
-      <p>类似 POST /api/v1/streams/start</p>
-      <p>这是“控制面”协议：HTTP/JSON（不是媒体流）</p>
-      <p>2) gateway 返回会话信息</p>
-      <p>包括 publishRtmp、playHttpFlv、id 等</p>
-      <p>这里已经把“该推到哪、该拉哪个流”编排好了</p>
-      <p>3) 推流端再把媒体流推到 publishRtmp</p>
-      <p>这一段是“数据面”协议：RTMP</p>
-      <p>也就是编码后音视频真正上传到服务端的通道</p>
-      <p>4) 拉流端按需要拉取播放地址</p>
-      <p>常见是 playHttpFlv（HTTP-FLV），也可用 RTMP/WebRTC（看服务端配置和客户端能力）</p>
-      <p>这一段是服务端分发给观众/播放器的协议</p>
-      <p>此 UI 仅管理地址与状态，媒体分发由 service 内置 ZLMediaKit 内核承担。</p>
-    </section>
+    <!-- ── 参考 & 提示（soft stone editorial section）─── -->
+    <div class="soft-section">
+      <section class="panel">
+        <h2>两端填写参考</h2>
+        <ul>
+          <li>推流端：服务地址填 <code>run/runtime.json</code> 里的 <code>gateway.url</code>，app 与 stream 与本页保持一致。</li>
+          <li>拉流端：服务地址同上，填写相同 app 与 stream，优先协议建议 HTTP-FLV。</li>
+          <li>跨机器部署请放行 <code>runtime.json</code> 中 gateway 端口及 RTMP/HTTP 端口。</li>
+        </ul>
+      </section>
+      <section class="panel">
+        <h2>提示</h2>
+        <p>完整链路：</p>
+        <p>① 推流端向 gateway 发 <code>POST /api/v1/streams/start</code>（控制面：HTTP/JSON）</p>
+        <p>② gateway 返回会话信息，编排推流 &amp; 拉流地址</p>
+        <p>③ 推流端将媒体流推到 <code>publishRtmp</code>（数据面：RTMP）</p>
+        <p>④ 拉流端按需拉取 <code>playHttpFlv</code> / HLS / RTMP</p>
+        <p>媒体分发由内置 ZLMediaKit 内核承担，此控制台仅管理地址与状态。</p>
+      </section>
+    </div>
 
     <script src="./app.js"></script>
   </body>
