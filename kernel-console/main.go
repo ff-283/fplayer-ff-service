@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"flag"
@@ -80,6 +81,9 @@ type childProcs struct {
 }
 
 var publicHostFlag = flag.String("public-host", "", "Public host/IP used by gateway to generate play URLs")
+var gatewayPortFlag = flag.Int("gateway-port", 0, "Preferred gateway port (0 = auto: try 9000 then random)")
+var appFlag = flag.String("app", "live", "App name for auto-created stream")
+var streamFlag = flag.String("stream", "stream001", "Stream name for auto-created stream")
 
 func main() {
 	flag.Parse()
@@ -95,7 +99,7 @@ func main() {
 	fmt.Println("==================================================")
 	fmt.Println("Starting service core (ZLM + gateway) ...")
 
-	procs, runtime, err := startCore(layout)
+	procs, runtime, err := startCore(layout, *gatewayPortFlag)
 	if err != nil {
 		fmt.Printf("Start failed: %v\n", err)
 		waitExitPrompt()
@@ -103,6 +107,18 @@ func main() {
 	}
 
 	printRuntimeSummary(runtime)
+
+	app := strings.TrimSpace(*appFlag)
+	stream := strings.TrimSpace(*streamFlag)
+	if app != "" && stream != "" {
+		created, createErr := autoCreateStream(runtime.Gateway.URL, app, stream)
+		if createErr != nil {
+			fmt.Printf("Auto-create stream warning: %v\n", createErr)
+		} else if created != nil {
+			fmt.Printf("Stream auto-created => id=%s app=%s stream=%s\n", created.ID, created.App, created.Stream)
+		}
+	}
+
 	fmt.Println("")
 	fmt.Println("Service is running. Press Ctrl+C to stop.")
 
@@ -281,7 +297,7 @@ func waitGatewayHealthy(port int, timeout time.Duration) bool {
 	return false
 }
 
-func startCore(layout serviceLayout) (childProcs, runtimeInfo, error) {
+func startCore(layout serviceLayout, gwPortPref int) (childProcs, runtimeInfo, error) {
 	var procs childProcs
 	var info runtimeInfo
 
@@ -343,7 +359,12 @@ func startCore(layout serviceLayout) (childProcs, runtimeInfo, error) {
 	var gwErr io.Closer
 	for i := 0; i < 8; i++ {
 		preferred := 0
-		if i == 0 {
+		switch {
+		case i == 0 && gwPortPref > 0:
+			preferred = gwPortPref
+		case i == 0:
+			preferred = 9000
+		case i == 1 && gwPortPref > 0:
 			preferred = 9000
 		}
 		candidate := getFreePort(preferred)
@@ -529,6 +550,51 @@ func resolvePublicHost(flagValue, envValue string) (string, string) {
 		return host, "env(SERVICE_PUBLIC_HOST)"
 	}
 	return "", ""
+}
+
+type streamCreateResp struct {
+	ID          string            `json:"id"`
+	App         string            `json:"app"`
+	Stream      string            `json:"stream"`
+	ServiceMode string            `json:"serviceMode"`
+	PublishRTMP string            `json:"publishRtmp"`
+	PlayURLs    map[string]string `json:"playUrls"`
+}
+
+func autoCreateStream(gatewayURL, app, stream string) (*streamCreateResp, error) {
+	body := map[string]any{
+		"app":           app,
+		"stream":        stream,
+		"serviceMode":   "httpflv",
+		"publisherMeta": map[string]string{"source": "kernel-console"},
+	}
+	raw, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+
+	url := strings.TrimRight(gatewayURL, "/") + "/api/v1/streams/start"
+	resp, err := http.Post(url, "application/json", bytes.NewReader(raw))
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode >= 400 {
+		var errBody map[string]string
+		_ = json.NewDecoder(resp.Body).Decode(&errBody)
+		msg := errBody["error"]
+		if msg == "" {
+			msg = fmt.Sprintf("HTTP %d", resp.StatusCode)
+		}
+		return nil, errors.New(msg)
+	}
+
+	var result streamCreateResp
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, err
+	}
+	return &result, nil
 }
 
 func printAlignedPairs(pairs [][2]string) {

@@ -11,7 +11,7 @@ contextBridge.exposeInMainWorld("nativeBridge", {
   },
   getDefaultGatewayUrl: () => ipcRenderer.invoke("service:getDefaultGatewayUrl"),
   getStartupStatus: () => ipcRenderer.invoke("service:getStartupStatus"),
-  startServiceCore: () => ipcRenderer.invoke("service:startServiceCore"),
+  startServiceCore: (preferredPort) => ipcRenderer.invoke("service:startServiceCore", preferredPort),
   stopServiceCore: () => ipcRenderer.invoke("service:stopServiceCore"),
   stopAllAndExit: () => ipcRenderer.invoke("service:stopAllAndExit")
 });

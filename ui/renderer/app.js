@@ -142,7 +142,7 @@ function syncMobilePlayAddress() {
 }
 
 function syncStartStopButtons() {
-  btnStart.disabled = !startupReady || serviceRunning;
+  btnStart.disabled = serviceRunning;
   btnStopService.disabled = !serviceRunning;
 }
 
@@ -273,13 +273,25 @@ async function startStream() {
   if (payload.publicProxyEnabled && !payload.publicHost) {
     throw new Error("已启用公网代理，请填写公网播放主机。");
   }
-  const resp = await fetch(`${base}/api/v1/streams/start`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload)
-  });
+  let resp;
+  try {
+    resp = await fetch(`${base}/api/v1/streams/start`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+  } catch (_) {
+    throw new Error("无法连接网关，请检查 Gateway URL 是否正确或服务是否已启动。");
+  }
   if (!resp.ok) {
-    throw new Error(`start failed: ${resp.status}`);
+    if (resp.status === 409) {
+      throw new Error("当前 app/stream 已被占用，请先点击「停止流」。");
+    }
+    if (resp.status === 400) {
+      const body = await resp.json().catch(() => ({}));
+      throw new Error(body.error || "请求参数有误");
+    }
+    throw new Error(`网关返回错误 (${resp.status})`);
   }
   current = await resp.json();
   current.status = "running";
@@ -293,7 +305,8 @@ async function ensureServiceReady() {
   if (!window.nativeBridge?.startServiceCore) {
     throw new Error("服务尚未就绪，请稍候。");
   }
-  const ret = await window.nativeBridge.startServiceCore();
+  const preferredPort = parseGatewayPort();
+  const ret = await window.nativeBridge.startServiceCore(preferredPort);
   if (!ret?.ok) {
     throw new Error(ret?.message || "启动服务失败");
   }
@@ -302,6 +315,7 @@ async function ensureServiceReady() {
     const status = await window.nativeBridge.getStartupStatus();
     setStartupStatus(status?.state, status?.message || "状态未知");
     if (status?.state === "ready") {
+      await refreshGatewayUrl();
       return;
     }
     if (status?.state === "failed") {
@@ -310,6 +324,24 @@ async function ensureServiceReady() {
     await new Promise((resolve) => setTimeout(resolve, 300));
   }
   throw new Error("服务启动超时，请查看日志。");
+}
+
+async function refreshGatewayUrl() {
+  if (!window.nativeBridge?.getDefaultGatewayUrl) return;
+  try {
+    const url = await window.nativeBridge.getDefaultGatewayUrl();
+    if (url && typeof url === "string") {
+      elGateway.value = url;
+    }
+  } catch (_) {}
+}
+
+function parseGatewayPort() {
+  try {
+    const url = elGateway.value.trim();
+    const m = url.match(/:(\d{2,5})$/);
+    return m ? parseInt(m[1], 10) : null;
+  } catch { return null; }
 }
 
 async function queryStatus() {

@@ -149,6 +149,33 @@ async function waitGatewayHealthy(port, timeoutMs = 5000) {
   return false;
 }
 
+function waitTcpPort(port, timeoutMs = 8000) {
+  const deadline = Date.now() + timeoutMs;
+  return new Promise((resolve) => {
+    function tryConnect() {
+      if (Date.now() >= deadline) {
+        resolve(false);
+        return;
+      }
+      const sock = new net.Socket();
+      sock.setTimeout(300);
+      sock.connect(port, "127.0.0.1", () => {
+        sock.destroy();
+        resolve(true);
+      });
+      sock.on("error", () => {
+        sock.destroy();
+        setTimeout(tryConnect, 300);
+      });
+      sock.on("timeout", () => {
+        sock.destroy();
+        setTimeout(tryConnect, 300);
+      });
+    }
+    tryConnect();
+  });
+}
+
 async function queryGatewayPublishHost(port, timeoutMs = 1500) {
   try {
     const resp = await httpGetJson(`http://127.0.0.1:${port}/api/v1/debug/network`, timeoutMs);
@@ -238,7 +265,7 @@ function stopManagedCoreInternal() {
   });
 }
 
-async function startManagedCoreInternal() {
+async function startManagedCoreInternal(preferredPort) {
   coreStartupStatus = { state: "starting", message: "正在启动 ZLM 与 gateway..." };
   const { rootDir, runDir, logDir } = getManagedPaths();
   const runtimeLayout = getPlatformRuntimeLayout();
@@ -282,11 +309,31 @@ async function startManagedCoreInternal() {
   managedChildren.zlm = zlm;
   writePidFile(runDir, "zlm", zlm.pid);
 
+  coreStartupStatus = { state: "starting", message: "ZLM 已拉起，等待监听端口..." };
+  const zlmReady = await waitTcpPort(rtmpPort, 10000);
+  if (!zlmReady) {
+    safeKillPid(zlm.pid);
+    managedChildren.zlm = null;
+    coreStartupStatus = { state: "failed", message: "ZLM 启动超时，请查看日志。" };
+    throw new Error("ZLM failed to start (RTMP port not listening).");
+  }
+  coreStartupStatus = { state: "starting", message: "ZLM 已就绪，正在启动 gateway..." };
+
   let gatewayPort = -1;
   let gateway = null;
+
+  const userPref = typeof preferredPort === "number" && preferredPort > 0 ? preferredPort : 0;
+
   for (let attempt = 0; attempt < 8; attempt += 1) {
-    const preferred = attempt === 0 ? 9000 : 0;
-    const candidate = (await getFreePort(preferred)) || (await getFreePort(0));
+    let tryFirst;
+    if (attempt === 0) {
+      tryFirst = userPref || 9000;
+    } else if (attempt === 1 && userPref) {
+      tryFirst = 9000;
+    } else {
+      tryFirst = 0;
+    }
+    const candidate = (await getFreePort(tryFirst)) || (await getFreePort(0));
     if (!candidate) {
       continue;
     }
@@ -459,7 +506,7 @@ ipcMain.handle("service:getStartupStatus", async () => {
   return coreStartupStatus;
 });
 
-ipcMain.handle("service:startServiceCore", async () => {
+ipcMain.handle("service:startServiceCore", async (_event, preferredPort) => {
   if (!managedMode) {
     return { ok: false, message: "Not running in managed mode." };
   }
@@ -469,7 +516,7 @@ ipcMain.handle("service:startServiceCore", async () => {
   try {
     coreStartupStatus = { state: "starting", message: "正在启动 ZLM 与 gateway..." };
     if (app.isPackaged) {
-      await startManagedCoreInternal();
+      await startManagedCoreInternal(preferredPort);
     } else {
       startManagedCoreByScript();
     }
@@ -516,7 +563,7 @@ app.whenReady().then(() => {
     app.setIcon(iconPath);
   }
   coreStartupStatus = managedMode
-    ? { state: "starting", message: "正在初始化服务..." }
+    ? { state: "idle", message: "服务未启动。" }
     : { state: "ready", message: "当前为非托管模式。" };
   createWindow();
   app.on("activate", () => {
@@ -524,23 +571,6 @@ app.whenReady().then(() => {
       createWindow();
     }
   });
-
-  // Start service core in background to keep UI startup fast.
-  if (managedMode) {
-    (async () => {
-      try {
-        if (app.isPackaged) {
-          await startManagedCoreInternal();
-        } else {
-          startManagedCoreByScript();
-        }
-      } catch (err) {
-        // Keep UI alive for debugging; logs record service startup failures.
-        coreStartupStatus = { state: "failed", message: `启动失败：${err?.message || err}` };
-        console.error(`Managed core startup failed: ${err?.message || err}`);
-      }
-    })();
-  }
 });
 
 app.on("window-all-closed", () => {

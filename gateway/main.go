@@ -151,6 +151,27 @@ func startHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	mu.RLock()
+	for _, rec := range streams {
+		if rec.App == app && rec.Stream == stream && rec.Status == statusRunning {
+			host := publishHostForResponse(r)
+			resp := startResponse{
+				ID:          rec.ID,
+				App:         rec.App,
+				Stream:      rec.Stream,
+				ServiceMode: rec.ServiceMode,
+				PublishRTMP: "rtmp://" + host + ":" + strconv.Itoa(rtmpPort) + "/" + rec.App + "/" + rec.Stream,
+				PlayHTTPFLV: rec.PlayURLs["httpFlv"],
+				PlayHLS:     rec.PlayURLs["hls"],
+				PlayURLs:    rec.PlayURLs,
+			}
+			mu.RUnlock()
+			writeJSON(w, http.StatusOK, resp)
+			return
+		}
+	}
+	mu.RUnlock()
+
 	id, err := randomID()
 	if err != nil {
 		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "generate id failed"})
