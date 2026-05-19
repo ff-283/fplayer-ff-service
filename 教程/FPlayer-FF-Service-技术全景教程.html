@@ -6,485 +6,183 @@
 <title>FPlayer FF Service — 技术全景教程</title>
 <style>
 /* ═══════════════════════════════════════════════════════════════
-   Cohere 2026 Design System — adapted for tutorial
+   Anthropic / Claude Design System
+   Cream canvas · Coral primary · Slab-serif display
    ═══════════════════════════════════════════════════════════════ */
 :root {
-  /* ── Colors ─────────────────────────────────────────── */
-  --color-primary: #17171c;
-  --color-black: #000000;
-  --color-ink: #212121;
-  --color-deep-green: #003c33;
-  --color-dark-navy: #071829;
-  --color-canvas: #ffffff;
-  --color-soft-stone: #eeece7;
-  --color-pale-green: #edfce9;
-  --color-pale-blue: #f1f5ff;
-  --color-hairline: #d9d9dd;
-  --color-border-light: #e5e7eb;
-  --color-card-border: #f2f2f2;
-  --color-muted: #93939f;
-  --color-slate: #75758a;
-  --color-body-muted: #616161;
-  --color-action-blue: #1863dc;
-  --color-focus-blue: #4c6ee6;
-  --color-coral: #ff7759;
-  --color-coral-soft: #ffad9b;
-  --color-form-focus: #9b60aa;
+  --color-primary: #cc785c; --color-primary-active: #a9583e;
+  --color-accent-teal: #5db8a6; --color-accent-amber: #e8a55a;
+  --color-canvas: #faf9f5; --color-surface-soft: #f5f0e8; --color-surface-card: #efe9de;
+  --color-surface-cream-strong: #e8e0d2; --color-surface-warm: #f0ebe0;
+  --color-hairline: #e6dfd8; --color-hairline-soft: #ebe6df;
+  --color-ink: #141413; --color-body-strong: #252523; --color-body: #3d3d3a;
+  --color-muted: #6c6a64; --color-muted-soft: #8e8b82;
   --color-on-primary: #ffffff;
-  --color-on-dark: #ffffff;
-  --color-error: #b30000;
-
-  /* ── Typography — CohereText / Unica77 Cohere Web fallbacks ── */
-  --font-display: "CohereText", "Space Grotesk", "Inter", ui-sans-serif, system-ui, sans-serif;
-  --font-body: "Unica77 Cohere Web", "Inter", "Arial", ui-sans-serif, system-ui, sans-serif;
-  --font-mono: "CohereMono", "SF Mono", "Cascadia Code", "Consolas", "Courier New", monospace;
-
-  /* ── Spacing — 8px base ─────────────────────────────── */
-  --space-xxs: 2px;
-  --space-xs: 6px;
-  --space-sm: 8px;
-  --space-md: 12px;
-  --space-lg: 16px;
-  --space-xl: 24px;
-  --space-xxl: 32px;
-  --space-section: 80px;
-
-  /* ── Radius ─────────────────────────────────────────── */
-  --radius-xs: 4px;
-  --radius-sm: 8px;
-  --radius-md: 16px;
-  --radius-lg: 22px;
-  --radius-xl: 30px;
-  --radius-pill: 32px;
-  --radius-full: 9999px;
+  --color-code-bg: #f4f0e8; --color-code-text: #3d3d3a; --color-code-border: #e6dfd8;
+  --color-success: #5db872; --color-error: #c64545;
+  --font-display: "Tiempos Headline", "Cormorant Garamond", "EB Garamond", "Garamond", "Times New Roman", serif;
+  --font-body: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-mono: "JetBrains Mono", "Cascadia Code", "Consolas", "Courier New", ui-monospace, monospace;
+  --space-xxs: 4px; --space-xs: 8px; --space-sm: 12px; --space-md: 16px; --space-lg: 24px; --space-xl: 32px; --space-xxl: 48px; --space-section: 96px;
+  --radius-xs: 4px; --radius-sm: 6px; --radius-md: 8px; --radius-lg: 12px; --radius-xl: 16px; --radius-pill: 9999px; --radius-full: 9999px;
 }
-
-/* ── Dark Theme ──────────────────────────────────────────── */
 [data-theme="dark"] {
-  --color-primary: #e4e4e7;
-  --color-black: #ffffff;
-  --color-ink: #d4d4d8;
-  --color-canvas: #0c0c0e;
-  --color-soft-stone: #1a1a1e;
-  --color-card-border: #252529;
-  --color-hairline: #2a2a2e;
-  --color-border-light: #252529;
-  --color-muted: #6b6b76;
-  --color-slate: #8e8e93;
-  --color-body-muted: #8e8e93;
-  --color-on-primary: #0c0c0e;
-  --color-error: #ff453a;
-  --color-form-focus: #b57ecc;
-  --color-action-blue: #4c9aff;
-  --color-coral-soft: #ff8a7a;
-  --color-deep-green: #00261f;
-  --color-pale-green: #0d2818;
-  --color-pale-blue: #0d1a30;
-  --color-dark-navy: #0a1628;
+  --color-canvas: #1a1916; --color-surface-soft: #201f1c; --color-surface-card: #252320;
+  --color-surface-cream-strong: #2a2824; --color-surface-warm: #272420;
+  --color-hairline: #2a2824; --color-hairline-soft: #22211e;
+  --color-ink: #faf9f5; --color-body-strong: #e8e6df; --color-body: #c4c1b8;
+  --color-muted: #8e8b82; --color-muted-soft: #6c6a64;
+  --color-code-bg: #252320; --color-code-text: #c4c1b8; --color-code-border: #2a2824;
 }
 [data-theme="dark"] body { background: var(--color-canvas); }
 
-/* ═══════════════════════════════════════════════════════════════
-   Base — Cohere flat philosophy: no shadows, surface contrast
-   ═══════════════════════════════════════════════════════════════ */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 html { scroll-behavior: smooth; }
+body { font-family: var(--font-body); font-size: 16px; font-weight: 400; line-height: 1.65; color: var(--color-body); background: var(--color-canvas); transition: background 200ms ease, color 200ms ease; overflow-x: hidden; }
 
-body {
-  font-family: var(--font-body);
-  font-size: 16px;
-  font-weight: 400;
-  line-height: 1.5;
-  color: var(--color-ink);
-  background: var(--color-canvas);
-  transition: background 200ms ease, color 200ms ease;
-  overflow-x: hidden;
-}
-
-/* ═══════════════════════════════════════════════════════════════
-   Theme Toggle — pill control, top-right fixed
-   ═══════════════════════════════════════════════════════════════ */
-.theme-toggle {
-  position: fixed; top: var(--space-xl); right: var(--space-xl);
-  width: 40px; height: 40px; border-radius: var(--radius-full);
-  border: 1px solid var(--color-hairline); background: var(--color-canvas);
-  color: var(--color-slate); display: flex; align-items: center; justify-content: center;
-  cursor: pointer; z-index: 1000;
-  transition: border-color 140ms ease, color 140ms ease;
-}
-.theme-toggle:hover { border-color: var(--color-muted); color: var(--color-ink); }
-.theme-toggle svg { width: 18px; height: 18px; pointer-events: none; }
+.theme-toggle { position: fixed; top: var(--space-lg); right: var(--space-lg); width: 36px; height: 36px; border-radius: var(--radius-full); border: 1px solid var(--color-hairline); background: var(--color-canvas); color: var(--color-ink); display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 1000; transition: border-color 140ms ease; }
+.theme-toggle:hover { border-color: var(--color-primary); }
+.theme-toggle svg { width: 17px; height: 17px; pointer-events: none; }
 .theme-toggle .icon-sun, .theme-toggle .icon-moon { transition: opacity 180ms ease; }
 .theme-toggle .icon-sun { opacity: 0; position: absolute; }
 .theme-toggle .icon-moon { opacity: 1; position: relative; }
 [data-theme="dark"] .theme-toggle .icon-moon { opacity: 0; position: absolute; }
 [data-theme="dark"] .theme-toggle .icon-sun { opacity: 1; position: relative; }
 
-/* ═══════════════════════════════════════════════════════════════
-   Progress Bar — thin rule at page top
-   ═══════════════════════════════════════════════════════════════ */
-.progress-bar-wrap { position: fixed; top: 0; left: 0; right: 0; height: 2px; z-index: 9999; background: transparent; }
-.progress-bar-fill { height: 100%; background: var(--color-action-blue); width: 0%; transition: width 80ms linear; }
+.progress-bar-wrap { position: fixed; top: 0; left: 0; right: 0; height: 2px; z-index: 9999; }
+.progress-bar-fill { height: 100%; background: var(--color-primary); width: 0%; transition: width 80ms linear; }
 
-/* ═══════════════════════════════════════════════════════════════
-   Hero — white canvas with pale accent radiation (no gradient fill)
-   ═══════════════════════════════════════════════════════════════ */
-.hero {
-  text-align: center;
-  padding: 100px var(--space-lg) 60px;
-  background: var(--color-canvas);
-  border-bottom: 1px solid var(--color-hairline);
-}
-.hero h1 {
-  font-family: var(--font-display);
-  font-size: 56px;
-  font-weight: 400;
-  line-height: 1.0;
-  letter-spacing: -0.56px;
-  color: var(--color-black);
-  margin-bottom: var(--space-md);
-}
-.hero .subtitle {
-  font-size: 18px;
-  font-weight: 400;
-  line-height: 1.4;
-  color: var(--color-slate);
-  max-width: 560px;
-  margin: 0 auto var(--space-xl);
-}
-.hero .badge-row { display: flex; gap: var(--space-sm); justify-content: center; flex-wrap: wrap; }
-.hero .badge {
-  display: inline-block; padding: 6px 16px; border-radius: var(--radius-pill);
-  font-size: 13px; font-weight: 500; font-family: var(--font-body);
-  border: 1px solid var(--color-hairline); color: var(--color-slate);
-  background: var(--color-canvas);
-}
+.hero { text-align: center; padding: var(--space-section) var(--space-lg) var(--space-xxl); background: var(--color-canvas); border-bottom: 1px solid var(--color-hairline); }
+.hero-icon { width: 80px; height: 80px; border-radius: var(--radius-lg); margin-bottom: var(--space-lg); }
+.hero h1 { font-family: var(--font-display); font-size: 48px; font-weight: 400; line-height: 1.1; letter-spacing: -1px; color: var(--color-ink); margin-bottom: var(--space-md); }
+.hero .subtitle { font-family: var(--font-body); font-size: 18px; font-weight: 400; line-height: 1.5; color: var(--color-muted); max-width: 580px; margin: 0 auto var(--space-lg); }
+.hero .badge-row { display: flex; gap: var(--space-xs); justify-content: center; flex-wrap: wrap; }
+.hero .badge { display: inline-block; padding: 4px 12px; border-radius: var(--radius-pill); font-size: 13px; font-weight: 500; background: var(--color-surface-card); color: var(--color-ink); }
 
-/* ═══════════════════════════════════════════════════════════════
-   Sidebar + Content Layout
-   ═══════════════════════════════════════════════════════════════ */
-.page-layout {
-  max-width: 1200px; margin: 0 auto; display: grid;
-  grid-template-columns: 240px 1fr; gap: var(--space-xxl);
-  padding: var(--space-xxl) var(--space-lg);
-  align-items: start;
-}
-
-/* ── Sidebar Nav ─────────────────────────────────────────── */
-.sidebar {
-  position: sticky; top: 60px;
-  border-right: 1px solid var(--color-hairline);
-  padding-right: var(--space-xl);
-}
-.sidebar-title {
-  font-family: var(--font-mono);
-  font-size: 12px;
-  font-weight: 400;
-  line-height: 1.4;
-  letter-spacing: 0.24px;
-  color: var(--color-muted);
-  text-transform: uppercase;
-  margin-bottom: var(--space-lg);
-}
-.sidebar a {
-  display: block; padding: 6px 0;
-  font-family: var(--font-body); font-size: 14px; font-weight: 400;
-  line-height: 1.5; color: var(--color-slate); text-decoration: none;
-  border-left: 2px solid transparent; padding-left: var(--space-md);
-  transition: color 120ms ease, border-color 120ms ease;
-}
-.sidebar a:hover { color: var(--color-ink); }
-.sidebar a.active { color: var(--color-black); border-left-color: var(--color-black); font-weight: 500; }
-[data-theme="dark"] .sidebar a.active { color: var(--color-on-dark); border-left-color: var(--color-on-dark); }
-
-/* ── Main Content Area ──────────────────────────────────── */
+.page-layout { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: 230px 1fr; gap: var(--space-xxl); padding: var(--space-xl) var(--space-lg); align-items: start; }
+.sidebar { position: sticky; top: 60px; border-right: 1px solid var(--color-hairline); padding-right: var(--space-lg); }
+.sidebar-title { font-family: var(--font-body); font-size: 12px; font-weight: 500; letter-spacing: 1.5px; color: var(--color-muted-soft); text-transform: uppercase; margin-bottom: var(--space-md); }
+.sidebar a { display: block; padding: 6px 0 6px var(--space-sm); font-size: 14px; color: var(--color-muted); text-decoration: none; border-left: 2px solid transparent; transition: color 120ms ease, border-color 120ms ease; }
+.sidebar a:hover { color: var(--color-body); }
+.sidebar a.active { color: var(--color-primary); border-left-color: var(--color-primary); font-weight: 500; }
 .content-area { min-width: 0; }
 
-/* ═══════════════════════════════════════════════════════════════
-   Section — each functional module
-   ═══════════════════════════════════════════════════════════════ */
-.func-section {
-  margin-bottom: var(--space-section);
-  scroll-margin-top: 80px;
-}
+.func-section { margin-bottom: var(--space-section); scroll-margin-top: 80px; }
 .func-section:last-child { margin-bottom: 0; }
+.section-number { font-size: 12px; font-weight: 500; letter-spacing: 1.5px; color: var(--color-muted-soft); text-transform: uppercase; margin-bottom: var(--space-xxs); }
+.section-title { font-family: var(--font-display); font-size: 36px; font-weight: 400; line-height: 1.15; letter-spacing: -0.5px; color: var(--color-ink); margin-bottom: var(--space-lg); }
 
-.section-number {
-  font-family: var(--font-mono);
-  font-size: 12px;
-  font-weight: 400;
-  line-height: 1.4;
-  letter-spacing: 0.24px;
-  color: var(--color-muted);
-  text-transform: uppercase;
-  margin-bottom: var(--space-xs);
-}
-.section-title {
-  font-family: var(--font-display);
-  font-size: 32px;
-  font-weight: 400;
-  line-height: 1.2;
-  letter-spacing: -0.32px;
-  color: var(--color-black);
-  margin-bottom: var(--space-lg);
-}
-
-/* ── Panel — bordered white card (flat, no shadow) ──────── */
-.panel {
-  background: var(--color-canvas);
-  border: 1px solid var(--color-card-border);
-  border-radius: var(--radius-sm);
-  padding: var(--space-xxl);
-  margin-bottom: var(--space-xl);
-}
-.panel h3 {
-  font-family: var(--font-display);
-  font-size: 22px;
-  font-weight: 400;
-  line-height: 1.3;
-  color: var(--color-black);
-  margin-bottom: var(--space-md);
-}
-.panel h3.sub { font-size: 18px; margin-top: var(--space-xl); }
-.panel p { color: var(--color-ink); margin-bottom: var(--space-md); }
+.panel { background: var(--color-canvas); border: 1px solid var(--color-hairline); border-radius: var(--radius-lg); padding: var(--space-xl); margin-bottom: var(--space-lg); }
+.panel h3 { font-family: var(--font-display); font-size: 22px; font-weight: 400; line-height: 1.3; color: var(--color-ink); margin-bottom: var(--space-md); }
+.panel h3.sub { font-size: 18px; margin-top: var(--space-lg); }
+.panel p { color: var(--color-body); margin-bottom: var(--space-md); }
 .panel p:last-child { margin-bottom: 0; }
-.panel ul, .panel ol { margin: 0 0 var(--space-md) var(--space-xl); color: var(--color-ink); }
-.panel ul li, .panel ol li { margin-bottom: var(--space-xs); line-height: 1.6; }
+.panel ul, .panel ol { margin: 0 0 var(--space-md) 1.5em; color: var(--color-body); }
+.panel ul li, .panel ol li { margin-bottom: 6px; line-height: 1.7; }
 
-/* ── Dark feature band — deep green full-width ──────────── */
-.dark-band {
-  background: var(--color-deep-green); color: var(--color-on-dark);
-  padding: var(--space-xxl); margin-bottom: var(--space-xl); border-radius: var(--radius-sm);
-}
-.dark-band h3, .dark-band h4 { color: var(--color-on-dark); }
-.dark-band p, .dark-band li { color: rgba(255,255,255,0.85); }
+.cream-card { background: var(--color-surface-card); border: 1px solid var(--color-hairline); border-radius: var(--radius-lg); padding: var(--space-xl); margin-bottom: var(--space-lg); }
+.cream-card h3 { font-family: var(--font-display); font-size: 22px; font-weight: 400; color: var(--color-ink); margin-bottom: var(--space-md); }
+.cream-card p, .cream-card li { color: var(--color-body); }
 
-/* ── Soft stone section — neutral contrast break ────────── */
-.soft-band {
-  background: var(--color-soft-stone); padding: var(--space-xxl);
-  margin-bottom: var(--space-xl); border-radius: var(--radius-sm);
-}
-[data-theme="dark"] .soft-band { background: #141418; }
+.soft-band { background: var(--color-surface-soft); border-radius: var(--radius-lg); padding: var(--space-xl); margin-bottom: var(--space-lg); }
+.soft-band h3 { font-family: var(--font-display); font-size: 22px; font-weight: 400; color: var(--color-ink); margin-bottom: var(--space-md); }
 
-/* ═══════════════════════════════════════════════════════════════
-   Cards — flat bordered, surface-contrast depth only
-   ═══════════════════════════════════════════════════════════════ */
-.card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: var(--space-lg); margin: var(--space-xl) 0; }
-.card {
-  border: 1px solid var(--color-card-border); border-radius: var(--radius-sm);
-  padding: var(--space-xl); background: var(--color-canvas);
-  transition: border-color 160ms ease;
-}
-.card:hover { border-color: var(--color-hairline); }
-.card-icon { font-size: 32px; margin-bottom: var(--space-md); display: block; }
-.card h4 {
-  font-family: var(--font-display); font-size: 16px; font-weight: 400;
-  line-height: 1.3; color: var(--color-black); margin-bottom: var(--space-sm);
-}
-.card p { font-size: 14px; color: var(--color-slate); line-height: 1.6; }
-.card .card-tag {
-  display: inline-block; margin-top: var(--space-md); padding: 3px 10px;
-  border-radius: var(--radius-pill); font-size: 12px; font-weight: 500;
-  background: var(--color-pale-blue); color: var(--color-action-blue);
-}
+.warm-band { background: var(--color-surface-warm); border: 1px solid var(--color-hairline); border-radius: var(--radius-lg); padding: var(--space-xl); margin-bottom: var(--space-lg); }
+.warm-band h3 { font-family: var(--font-display); font-size: 22px; font-weight: 400; color: var(--color-ink); margin-bottom: var(--space-md); }
+.warm-band p, .warm-band li { color: var(--color-body); }
 
-/* ═══════════════════════════════════════════════════════════════
-   Diagrams — flat surface, thin border
-   ═══════════════════════════════════════════════════════════════ */
-.diagram-box {
-  margin: var(--space-xl) 0; padding: var(--space-xl);
-  background: var(--color-soft-stone); border: 1px solid var(--color-hairline);
-  border-radius: var(--radius-sm); text-align: center; overflow-x: auto;
-}
+.accent-band { background: rgba(204,120,92,0.08); border: 1px solid rgba(204,120,92,0.2); border-radius: var(--radius-lg); padding: var(--space-xl); margin-bottom: var(--space-lg); }
+.accent-band h3 { font-family: var(--font-display); font-size: 22px; font-weight: 400; color: var(--color-ink); margin-bottom: var(--space-md); }
+.accent-band p, .accent-band li { color: var(--color-body); }
+
+.card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: var(--space-md); margin: var(--space-lg) 0; }
+.card { background: var(--color-surface-card); border: 1px solid var(--color-hairline); border-radius: var(--radius-lg); padding: var(--space-xl); transition: border-color 160ms ease; }
+.card:hover { border-color: var(--color-primary); }
+.card-icon { font-size: 28px; margin-bottom: var(--space-md); display: block; }
+.card h4 { font-size: 18px; font-weight: 500; color: var(--color-ink); margin-bottom: var(--space-sm); }
+.card p { font-size: 14px; color: var(--color-muted); line-height: 1.6; }
+.card .card-tag { display: inline-block; margin-top: var(--space-md); padding: 4px 12px; border-radius: var(--radius-pill); font-size: 12px; font-weight: 500; background: var(--color-canvas); color: var(--color-primary); }
+
+.diagram-box { margin: var(--space-lg) 0; padding: var(--space-lg); background: var(--color-surface-soft); border: 1px solid var(--color-hairline); border-radius: var(--radius-lg); text-align: center; overflow-x: auto; }
 .diagram-box svg { max-width: 100%; height: auto; }
-.diagram-caption { margin-top: var(--space-md); font-size: 13px; color: var(--color-slate); }
+.diagram-caption { margin-top: var(--space-sm); font-size: 13px; color: var(--color-muted); }
 
-/* ═══════════════════════════════════════════════════════════════
-   Code — near-black block, mono type
-   ═══════════════════════════════════════════════════════════════ */
-.code-block {
-  background: #1a1a1e; color: #e4e4e7; border-radius: var(--radius-xs);
-  padding: var(--space-lg); margin: var(--space-lg) 0;
-  font-family: var(--font-mono); font-size: 13px; line-height: 1.6;
-  overflow-x: auto; white-space: pre;
-}
-[data-theme="dark"] .code-block { background: #14141a; border: 1px solid var(--color-hairline); }
-.code-block .kw { color: #c586c0; }
-.code-block .str { color: #ce9178; }
-.code-block .cmt { color: #6a9955; }
-.code-block .fn { color: #dcdcaa; }
-.code-block .num { color: #b5cea8; }
-.code-block .type { color: #4ec9b0; }
+.code-block { background: var(--color-code-bg); color: var(--color-code-text); border: 1px solid var(--color-code-border); border-radius: var(--radius-md); padding: var(--space-md); margin: var(--space-md) 0; font-family: var(--font-mono); font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; }
+.code-block .kw { color: #9b60aa; } .code-block .str { color: #b35c1e; } .code-block .cmt { color: #6a8a5a; } .code-block .fn { color: #7a6628; } .code-block .num { color: #5a8a4a; } .code-block .type { color: #3a8a7a; }
+.inline-code { font-family: var(--font-mono); font-size: 13px; background: var(--color-surface-card); color: var(--color-ink); padding: 2px 6px; border-radius: var(--radius-xs); }
 
-.inline-code {
-  font-family: var(--font-mono); font-size: 13px; background: var(--color-soft-stone);
-  padding: 2px 6px; border-radius: var(--radius-xs); color: var(--color-primary);
-}
-[data-theme="dark"] .inline-code { background: #252529; color: var(--color-primary); }
+.callout { padding: var(--space-md); border-radius: var(--radius-sm); margin: var(--space-md) 0; font-size: 14px; line-height: 1.6; }
+.callout-info { background: var(--color-surface-soft); border-left: 3px solid var(--color-accent-teal); }
+.callout-tip { background: rgba(93,184,118,0.08); border-left: 3px solid var(--color-success); }
+.callout strong { display: block; margin-bottom: 4px; color: var(--color-body-strong); }
 
-/* ═══════════════════════════════════════════════════════════════
-   Callout boxes — flat left-border accent
-   ═══════════════════════════════════════════════════════════════ */
-.callout {
-  padding: var(--space-lg); border-radius: var(--radius-xs); margin: var(--space-lg) 0;
-  font-size: 14px; line-height: 1.6;
-}
-.callout-info { background: var(--color-pale-blue); border-left: 3px solid var(--color-action-blue); }
-.callout-warn { background: #fff8e6; border-left: 3px solid #f0c850; }
-[data-theme="dark"] .callout-warn { background: #2a2010; }
-.callout-tip { background: var(--color-pale-green); border-left: 3px solid #2d8a56; }
-[data-theme="dark"] .callout-tip { background: #0d2818; border-left-color: #3dba6a; }
-.callout strong { display: block; margin-bottom: 4px; }
-
-/* ═══════════════════════════════════════════════════════════════
-   Tables — rule-separated rows (research-table style)
-   ═══════════════════════════════════════════════════════════════ */
-.comp-table { width: 100%; border-collapse: collapse; margin: var(--space-lg) 0; font-size: 14px; }
-.comp-table th, .comp-table td {
-  padding: var(--space-md) var(--space-lg); text-align: left;
-  border-bottom: 1px solid var(--color-hairline);
-}
-.comp-table th { font-weight: 500; color: var(--color-slate); font-size: 12px; text-transform: uppercase; letter-spacing: 0.24px; }
-.comp-table td { color: var(--color-ink); }
+.comp-table { width: 100%; border-collapse: collapse; margin: var(--space-md) 0; font-size: 14px; }
+.comp-table th, .comp-table td { padding: var(--space-sm) var(--space-md); text-align: left; border-bottom: 1px solid var(--color-hairline); }
+.comp-table th { font-weight: 500; font-size: 12px; letter-spacing: 1.5px; color: var(--color-muted-soft); text-transform: uppercase; }
+.comp-table td { color: var(--color-body); }
 .comp-table tr:last-child td { border-bottom: none; }
-.comp-table-wrap { overflow-x: auto; margin: var(--space-lg) 0; }
+.comp-table-wrap { overflow-x: auto; margin: var(--space-md) 0; }
 
-/* ═══════════════════════════════════════════════════════════════
-   Timeline — thin rule with dot markers
-   ═══════════════════════════════════════════════════════════════ */
-.timeline { position: relative; padding-left: 36px; margin: var(--space-xl) 0; }
-.timeline::before { content: ""; position: absolute; left: 15px; top: 8px; bottom: 8px; width: 1px; background: var(--color-hairline); }
-.timeline-step { position: relative; margin-bottom: var(--space-xl); }
+.timeline { position: relative; padding-left: 32px; margin: var(--space-lg) 0; }
+.timeline::before { content: ""; position: absolute; left: 13px; top: 8px; bottom: 8px; width: 1px; background: var(--color-hairline); }
+.timeline-step { position: relative; margin-bottom: var(--space-lg); }
 .timeline-step:last-child { margin-bottom: 0; }
-.timeline-dot {
-  position: absolute; left: -25px; top: 4px;
-  width: 10px; height: 10px; border-radius: var(--radius-full);
-  background: var(--color-canvas); border: 2px solid var(--color-action-blue);
-}
-.timeline-step.done .timeline-dot { background: var(--color-action-blue); }
-.timeline-step h4 { font-family: var(--font-display); font-size: 16px; font-weight: 400; color: var(--color-black); margin-bottom: 4px; }
-.timeline-step p { font-size: 14px; color: var(--color-slate); }
+.timeline-dot { position: absolute; left: -22px; top: 5px; width: 8px; height: 8px; border-radius: var(--radius-full); background: var(--color-primary); }
+.timeline-step h4 { font-size: 16px; font-weight: 500; color: var(--color-body-strong); margin-bottom: 4px; }
+.timeline-step p { font-size: 14px; color: var(--color-muted); }
 
-/* ═══════════════════════════════════════════════════════════════
-   Glossary grid — rule-bordered items
-   ═══════════════════════════════════════════════════════════════ */
-.glossary { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: var(--space-md); margin: var(--space-xl) 0; }
-.glossary-item {
-  border: 1px solid var(--color-hairline); border-radius: var(--radius-sm); padding: var(--space-lg);
-}
-.glossary-item dt { font-weight: 500; font-size: 15px; color: var(--color-black); margin-bottom: var(--space-xs); }
-.glossary-item dd { font-size: 13px; color: var(--color-slate); }
+.glossary { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: var(--space-sm); margin: var(--space-lg) 0; }
+.glossary-item { background: var(--color-surface-card); border: 1px solid var(--color-hairline); border-radius: var(--radius-md); padding: var(--space-md); }
+.glossary-item dt { font-weight: 500; font-size: 15px; color: var(--color-ink); margin-bottom: var(--space-xxs); }
+.glossary-item dd { font-size: 13px; color: var(--color-muted); line-height: 1.5; }
 
-/* ═══════════════════════════════════════════════════════════════
-   Link cards — flat bordered
-   ═══════════════════════════════════════════════════════════════ */
-.link-card {
-  display: flex; align-items: center; gap: var(--space-md);
-  padding: var(--space-md) var(--space-lg); border: 1px solid var(--color-hairline);
-  border-radius: var(--radius-sm); margin-bottom: var(--space-sm);
-  text-decoration: none; color: var(--color-ink); transition: border-color 140ms ease;
-}
-.link-card:hover { border-color: var(--color-action-blue); }
-.link-card .link-icon { font-size: 22px; flex-shrink: 0; }
-.link-card .link-info h5 { font-size: 15px; font-weight: 500; color: var(--color-black); margin-bottom: 2px; }
-.link-card .link-info span { font-size: 13px; color: var(--color-slate); }
+.link-card { display: flex; align-items: center; gap: var(--space-md); padding: var(--space-md); border: 1px solid var(--color-hairline); border-radius: var(--radius-md); margin-bottom: var(--space-xs); text-decoration: none; background: var(--color-canvas); transition: border-color 140ms ease; }
+.link-card:hover { border-color: var(--color-primary); }
+.link-card .link-icon { font-size: 20px; flex-shrink: 0; }
+.link-card .link-info h5 { font-size: 15px; font-weight: 500; color: var(--color-ink); margin-bottom: 2px; }
+.link-card .link-info span { font-size: 13px; color: var(--color-muted); }
 
-/* ═══════════════════════════════════════════════════════════════
-   Back to top — pill control
-   ═══════════════════════════════════════════════════════════════ */
-.back-top {
-  position: fixed; bottom: var(--space-xl); right: var(--space-xl);
-  width: 36px; height: 36px; border-radius: var(--radius-full);
-  border: 1px solid var(--color-hairline); background: var(--color-canvas);
-  color: var(--color-slate); display: flex; align-items: center; justify-content: center;
-  cursor: pointer; z-index: 900; opacity: 0; pointer-events: none; transition: opacity 200ms ease;
-}
+.back-top { position: fixed; bottom: var(--space-lg); right: var(--space-lg); width: 36px; height: 36px; border-radius: var(--radius-full); border: 1px solid var(--color-hairline); background: var(--color-canvas); color: var(--color-ink); display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 900; opacity: 0; pointer-events: none; transition: opacity 200ms ease; }
 .back-top.visible { opacity: 1; pointer-events: auto; }
-.back-top:hover { border-color: var(--color-muted); }
+.back-top:hover { border-color: var(--color-primary); color: var(--color-primary); }
 
-/* ═══════════════════════════════════════════════════════════════
-   Footer
-   ═══════════════════════════════════════════════════════════════ */
-.site-footer {
-  text-align: center; padding: var(--space-xxl); border-top: 1px solid var(--color-hairline);
-  color: var(--color-slate); font-size: 13px; font-family: var(--font-body);
-}
+.site-footer { text-align: center; padding: var(--space-xxl); border-top: 1px solid var(--color-hairline); background: var(--color-surface-soft); color: var(--color-muted); font-size: 14px; }
 
-/* ═══════════════════════════════════════════════════════════════
-   Announcement-style concept chain
-   ═══════════════════════════════════════════════════════════════ */
-.concept-chain {
-  display: flex; align-items: center; flex-wrap: wrap; gap: var(--space-sm);
-  justify-content: flex-start; margin: var(--space-lg) 0;
-}
-.concept-node {
-  padding: 8px 16px; border-radius: var(--radius-sm); font-size: 13px; font-weight: 500;
-  border: 1px solid var(--color-hairline); background: var(--color-canvas); color: var(--color-black);
-}
-.concept-arrow { color: var(--color-muted); font-size: 16px; }
+.concept-chain { display: flex; align-items: center; flex-wrap: wrap; gap: var(--space-xs); margin: var(--space-md) 0; }
+.concept-node { padding: 6px 14px; border-radius: var(--radius-pill); font-size: 13px; font-weight: 500; background: var(--color-surface-card); color: var(--color-ink); border: 1px solid var(--color-hairline); }
+.concept-arrow { color: var(--color-muted); font-size: 15px; }
 
-/* ═══════════════════════════════════════════════════════════════
-   Responsive — Cohere breakpoints
-   ═══════════════════════════════════════════════════════════════ */
-@media (max-width: 1024px) {
-  .page-layout { grid-template-columns: 200px 1fr; }
-}
+@media (max-width: 1024px) { .page-layout { grid-template-columns: 190px 1fr; } }
 @media (max-width: 768px) {
   .page-layout { grid-template-columns: 1fr; }
-  .sidebar { position: static; border-right: none; border-bottom: 1px solid var(--color-hairline); padding-right: 0; padding-bottom: var(--space-lg); margin-bottom: var(--space-xl); }
-  .sidebar a { display: inline-block; border-left: none; border-bottom: 2px solid transparent; padding-left: 0; padding-bottom: 4px; margin-right: var(--space-lg); }
-  .sidebar a.active { border-left-color: transparent; border-bottom-color: var(--color-black); }
-  .hero h1 { font-size: 40px; }
-  .panel { padding: var(--space-lg); }
-  .card-grid { grid-template-columns: 1fr; }
-  .glossary { grid-template-columns: 1fr; }
-  .section-title { font-size: 26px; }
-}
-@media (max-width: 425px) {
-  .hero h1 { font-size: 32px; letter-spacing: 0; }
-  .panel { padding: var(--space-md); border-radius: 0; border-left: none; border-right: none; }
-  .section-title { font-size: 22px; }
-  .concept-chain { flex-direction: column; align-items: flex-start; }
-  .concept-arrow { transform: rotate(90deg); align-self: center; }
+  .sidebar { position: static; border-right: none; border-bottom: 1px solid var(--color-hairline); padding-right: 0; padding-bottom: var(--space-sm); margin-bottom: var(--space-lg); }
+  .sidebar a { display: inline-block; border-left: none; border-bottom: 2px solid transparent; padding-left: 0; padding-bottom: 4px; margin-right: var(--space-md); }
+  .sidebar a.active { border-left-color: transparent; border-bottom-color: var(--color-primary); color: var(--color-primary); }
+  .hero h1 { font-size: 32px; letter-spacing: -0.5px; }
+  .section-title { font-size: 28px; letter-spacing: -0.3px; }
 }
 </style>
 </head>
 <body>
-
 <div class="progress-bar-wrap"><div class="progress-bar-fill" id="progressBar"></div></div>
-
-<!-- Theme Toggle -->
 <button class="theme-toggle" id="themeToggle" title="切换深浅色主题" aria-label="切换深浅色主题">
-  <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
-  <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
+  <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+  <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
 </button>
-
-<!-- Back to Top -->
 <button class="back-top" id="backTop" title="回到顶部" aria-label="回到顶部">
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
 </button>
 
-<!-- ═══════════════════════════════════════════════════════════════
-   Hero
-   ═══════════════════════════════════════════════════════════════ -->
 <header class="hero">
+  <img src="../doc/img/icon.png" alt="FPlayer FF Service" class="hero-icon" onerror="this.style.display='none'"/>
   <h1>FPlayer FF Service</h1>
-  <p class="subtitle">流媒体服务端技术全景教程<br/>从最基础的概念开始，逐模块讲清楚整个项目</p>
+  <p class="subtitle">一份流媒体服务端的技术全貌教程<br/>每个你不认识的名词，这里都会从头讲清楚</p>
   <div class="badge-row">
-    <span class="badge">流媒体服务</span>
-    <span class="badge">Go + Electron</span>
-    <span class="badge">ZLMediaKit</span>
-    <span class="badge">跨平台</span>
-    <span class="badge">三端协同</span>
+    <span class="badge">流媒体服务</span><span class="badge">Go + Electron</span><span class="badge">ZLMediaKit</span><span class="badge">跨平台</span><span class="badge">三端协同</span>
   </div>
 </header>
 
-<!-- ═══════════════════════════════════════════════════════════════
-   Page Layout: Sidebar + Content
-   ═══════════════════════════════════════════════════════════════ -->
 <div class="page-layout">
-
-<!-- ── Sidebar ────────────────────────────────────────────── -->
 <nav class="sidebar" id="sidebar">
   <div class="sidebar-title">功能模块</div>
   <a href="#s01" class="active">01 项目概览</a>
@@ -502,797 +200,842 @@ body {
   <a href="#s13">13 延伸阅读</a>
 </nav>
 
-<!-- ── Main Content ──────────────────────────────────────── -->
 <main class="content-area">
-
-<!-- ═══════════════════════════════════════════════════════════════
-   01 — 项目概览
-   ═══════════════════════════════════════════════════════════════ -->
+<!-- ════════════════ 01 ════════════════ -->
 <section class="func-section" id="s01">
-  <div class="section-number">01</div>
-  <h2 class="section-title">项目概览</h2>
+<div class="section-number">01</div><h2 class="section-title">项目概览</h2>
 
-  <div class="panel">
-    <h3>这个项目是做什么的</h3>
-    <p><strong>FPlayer FF Service</strong> 是一个独立部署的流媒体服务程序。它的核心工作只有三件事：</p>
-    <ol>
-      <li><strong>接收视频数据</strong>：接收来自采集端（桌面客户端）通过网络推送过来的音视频流</li>
-      <li><strong>转换播放格式</strong>：把收到的同一份视频数据自动转成多种播放格式（RTMP、HTTP-FLV、HLS 等），让不同类型的播放端都能使用</li>
-      <li><strong>管理播放地址</strong>：生成并维护推流地址和播放地址，让调用方不需要手动拼接 URL</li>
-    </ol>
-    <p>它不采集画面，也不播放画面。它只负责"收 → 转 → 发"这个中间环节。它运行在 Windows 或 Linux 机器上，通过网络接口与其他程序通信。</p>
-  </div>
+<div class="panel">
+<h3>这个项目做了什么</h3>
+<p>FPlayer FF Service 是一个可以独立运行在电脑上的<strong>流媒体服务程序</strong>。</p>
+<p>先解释几个词：</p>
+<ul>
+  <li><strong>程序</strong>：你双击图标或在终端里敲一行命令后运行起来的东西。它能持续运行，接收输入、做出处理、给出输出。微信、浏览器、音乐播放器都是程序。</li>
+  <li><strong>服务程序</strong>：有一种程序不需要你去操作它。它启动后在后台安静等着，等别的程序通过网络找它要数据。网页后端、API 接口都属于这一类。FPlayer FF Service 就是这样——它启动后等着 Desktop 和 Mobile 来找它。</li>
+  <li><strong>流媒体</strong>：就是"象流水一样持续传输的音视频数据"，而不是先录成文件再传。后面第 02 节会展开讲。</li>
+</ul>
+<p>这个程序做的事情很简单：</p>
+<ol>
+  <li><strong>接收视频数据</strong>—— 采集端（桌面客户端 Desktop）通过网络把正在录制的画面和声音持续发给它</li>
+  <li><strong>转换播放格式</strong>—— 同一份视频数据自动变成多种不同的"包装方式"，让不同类型的播放端都能用</li>
+  <li><strong>管理播放地址</strong>—— 告诉推流端往哪推、告诉播放端从哪拉。地址怎么拼、端口是多少全部由它处理</li>
+</ol>
+<p>它<strong>不采集画面</strong>（那是 desktop 的事），也<strong>不显示画面</strong>（那是 mobile 或播放器的事）。它只做中间环节：收 → 转 → 发。</p>
+</div>
 
-  <div class="panel">
-    <h3>在 FPlayer 生态中的位置</h3>
-    <p>FPlayer FF Service 不是一个孤立软件。它是三个项目组成的生态系统中的"服务端枢纽"：</p>
-    <ul>
-      <li><strong>fplayer-ff-desktop</strong>（桌面客户端）：负责采集屏幕/摄像头画面，推流到 Service，也可以从 Service 拉流播放</li>
-      <li><strong>fplayer-ff-service</strong>（本服务）：负责接收推流、协议转换、地址编排、流分发</li>
-      <li><strong>fplayer-ff-mobile</strong>（手机客户端）：从 Service 获取播放地址，拉流观看</li>
-    </ul>
-    <p>它们的典型使用场景是：同一局域网内，一台电脑采集并推流 → Service 中转分发 → 其他设备拉流观看。</p>
-  </div>
+<div class="diagram-box">
+<svg viewBox="0 0 780 260" xmlns="http://www.w3.org/2000/svg" style="max-width:780px;">
+  <defs>
+    <marker id="a01a" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto"><path d="M0,0 L7,2.5 L0,5 Z" fill="#cc785c"/></marker>
+    <marker id="a01b" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto"><path d="M0,0 L7,2.5 L0,5 Z" fill="#5db8a6"/></marker>
+    <marker id="a01c" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto"><path d="M0,0 L7,2.5 L0,5 Z" fill="#6c6a64"/></marker>
+  </defs>
+  <!-- Input row -->
+  <rect x="40" y="20" width="160" height="56" rx="8" fill="#f5f0e8" stroke="#cc785c" stroke-width="1.5"/>
+  <text x="120" y="46" text-anchor="middle" fill="#141413" font-size="14" font-weight="500">📹 采集端</text>
+  <text x="120" y="64" text-anchor="middle" fill="#6c6a64" font-size="11">桌面客户端 · 摄像头</text>
+  <!-- Arrow -->
+  <line x1="200" y1="48" x2="270" y2="48" stroke="#cc785c" stroke-width="2" marker-end="url(#a01a)"/>
+  <text x="235" y="40" text-anchor="middle" fill="#cc785c" font-size="10">RTMP 推流</text>
+  <!-- Service center -->
+  <rect x="275" y="10" width="230" height="96" rx="10" fill="#efe9de" stroke="#e6dfd8" stroke-width="1.5"/>
+  <text x="390" y="36" text-anchor="middle" fill="#141413" font-size="15" font-weight="600">⚙️ FPlayer FF Service</text>
+  <line x1="295" y1="48" x2="485" y2="48" stroke="#e6dfd8" stroke-width="0.5"/>
+  <text x="390" y="64" text-anchor="middle" fill="#6c6a64" font-size="11">① 接收推流</text>
+  <text x="390" y="80" text-anchor="middle" fill="#6c6a64" font-size="11">② 自动转封装为多种格式</text>
+  <text x="390" y="96" text-anchor="middle" fill="#6c6a64" font-size="11">③ 生成播放地址</text>
+  <!-- Arrow out -->
+  <line x1="505" y1="48" x2="575" y2="48" stroke="#5db8a6" stroke-width="2" marker-end="url(#a01b)"/>
+  <text x="540" y="40" text-anchor="middle" fill="#5db8a6" font-size="10">HTTP-FLV / HLS 拉流</text>
+  <!-- Outputs -->
+  <rect x="580" y="12" width="80" height="34" rx="6" fill="#f5f0e8" stroke="#e6dfd8" stroke-width="1"/>
+  <text x="620" y="34" text-anchor="middle" fill="#141413" font-size="12" font-weight="500">📱 手机</text>
+  <rect x="580" y="52" width="80" height="34" rx="6" fill="#f5f0e8" stroke="#e6dfd8" stroke-width="1"/>
+  <text x="620" y="74" text-anchor="middle" fill="#141413" font-size="12" font-weight="500">🖥 电脑</text>
+  <rect x="580" y="92" width="80" height="34" rx="6" fill="#f5f0e8" stroke="#e6dfd8" stroke-width="1"/>
+  <text x="620" y="114" text-anchor="middle" fill="#141413" font-size="12" font-weight="500">🌐 网页</text>
 
-  <div class="panel">
-    <h3>项目由哪几部分组成</h3>
-    <p>这个服务程序内部包含四个独立的程序组件：</p>
-    <div class="card-grid">
-      <div class="card">
-        <span class="card-icon">📡</span>
-        <h4>ZLMediaKit</h4>
-        <p>用 C++ 编写的高性能流媒体引擎。负责接收推流、把同一份数据转换成多种播放格式、对外分发。以预编译二进制形式提供。</p>
-        <span class="card-tag">C++ · 媒体引擎</span>
-      </div>
-      <div class="card">
-        <span class="card-icon">🚦</span>
-        <h4>Gateway</h4>
-        <p>用 Go 编写的 HTTP API 服务。提供流会话的创建、查询、停止等接口。生成推流和播放地址。整个程序约 860 行，一个文件，零第三方依赖。</p>
-        <span class="card-tag">Go · API 网关</span>
-      </div>
-      <div class="card">
-        <span class="card-icon">🖥️</span>
-        <h4>Electron UI</h4>
-        <p>基于 Electron（Chromium + Node.js）的桌面图形界面。提供流管理、日志查看、深浅色主题等功能。支持 Windows 和 Linux。</p>
-        <span class="card-tag">Electron · 管理界面</span>
-      </div>
-      <div class="card">
-        <span class="card-icon">⚙️</span>
-        <h4>Kernel Console</h4>
-        <p>Go 编写的命令行启动器，约 650 行。在终端中运行，负责启动 ZLMediaKit 和 Gateway，显示运行信息。适合无图形界面的服务器环境。</p>
-        <span class="card-tag">Go · 命令行启动器</span>
-      </div>
-    </div>
-  </div>
+  <!-- Bottom: 4 components -->
+  <text x="390" y="150" text-anchor="middle" fill="#8e8b82" font-size="11">Service 内部的四个组件：</text>
+  <rect x="40" y="165" width="155" height="60" rx="8" fill="#edfce9" stroke="#b8d8b0" stroke-width="1"/>
+  <text x="117" y="190" text-anchor="middle" fill="#141413" font-size="13" font-weight="500">📡 ZLMediaKit</text>
+  <text x="117" y="210" text-anchor="middle" fill="#6c6a64" font-size="10">媒体引擎 · C++</text>
+  <rect x="215" y="165" width="155" height="60" rx="8" fill="#f1f5ff" stroke="#b8c8e8" stroke-width="1"/>
+  <text x="292" y="190" text-anchor="middle" fill="#141413" font-size="13" font-weight="500">🚦 Gateway</text>
+  <text x="292" y="210" text-anchor="middle" fill="#6c6a64" font-size="10">API 网关 · Go</text>
+  <rect x="390" y="165" width="155" height="60" rx="8" fill="#fff8e6" stroke="#e8d8b0" stroke-width="1"/>
+  <text x="467" y="190" text-anchor="middle" fill="#141413" font-size="13" font-weight="500">🖥️ Electron UI</text>
+  <text x="467" y="210" text-anchor="middle" fill="#6c6a64" font-size="10">管理界面 · Electron</text>
+  <rect x="565" y="165" width="155" height="60" rx="8" fill="#f5f0e8" stroke="#e6dfd8" stroke-width="1"/>
+  <text x="642" y="190" text-anchor="middle" fill="#141413" font-size="13" font-weight="500">⌨️ Kernel Console</text>
+  <text x="642" y="210" text-anchor="middle" fill="#6c6a64" font-size="10">命令行启动器 · Go</text>
+</svg>
+<p class="diagram-caption">FPlayer FF Service 的整体定位：接收推流 → 协议转换 → 分发播放。内部有四个组件各司其职。</p>
+</div>
+
+<div class="panel">
+<h3>它和谁配合工作</h3>
+<ul>
+  <li><strong>fplayer-ff-desktop</strong>：桌面客户端程序，采集屏幕或摄像头画面推送给 Service</li>
+  <li><strong>fplayer-ff-service</strong>：本项目——接收、转换、分发</li>
+  <li><strong>fplayer-ff-mobile</strong>：手机 App，从 Service 获取地址后拉流播放</li>
+</ul>
+<p>典型场景：同一局域网下，一台电脑采集推流 → Service 中转 → 其他设备拉流观看。</p>
+</div>
 </section>
 
-<!-- ═══════════════════════════════════════════════════════════════
-   02 — 流媒体基础概念
-   ═══════════════════════════════════════════════════════════════ -->
+<!-- ════════════════ 02 ════════════════ -->
 <section class="func-section" id="s02">
-  <div class="section-number">02</div>
-  <h2 class="section-title">流媒体基础概念</h2>
-  <p style="color:var(--color-slate); margin-bottom:var(--space-xl);">这一节不涉及具体代码，但每一个概念都会在后续模块中反复出现。这里把它们逐个讲清楚，追溯到各自依赖的前置知识。</p>
+<div class="section-number">02</div><h2 class="section-title">流媒体基础概念</h2>
+<p style="color:var(--color-muted); margin-bottom:var(--space-lg);">这一节不涉及一行代码，但它讲清楚的东西会让你读后面的内容时毫无障碍。</p>
 
-  <!-- 什么是流 -->
-  <div class="panel">
-    <h3>"视频流"与"视频文件"的区别</h3>
-    <p>你平时看本地视频——比如双击一个 .mp4 文件——播放器是把整个文件读入，然后逐帧解码播放。如果文件还没下载完，就播不了。</p>
-    <p>而"视频流"（stream）是一段<strong>持续产生、边产边传的数据序列</strong>。采集端不断产生新的画面帧和声音数据，通过网络持续发送出去；接收端持续接收并立即解码播放，中间不需要等一个"完整文件"。</p>
-    <p>直播必须用"流"——因为画面是实时产生的，不可能等录完一个文件再传。</p>
-  </div>
+<div class="panel">
+<h3>看视频的两种方式：文件 vs 流</h3>
+<p>你看视频有两种方式。第一种：下载一个 .mp4 到电脑上双击打开。播放器把整个文件读一遍，一边读一边还原画面和声音。如果文件只下载了一半就打开——播到一半会卡住。</p>
+<p>第二种：打开一个直播页面，画面立刻出来了。你不需要等"完整文件"——因为根本不存在完整文件。画面是此时此刻正在发生的，采集端不断产生新画面帧，立刻压缩、立刻发送、接收端立刻播放。<strong>数据像打开的水龙头一样持续流过来</strong>，而不是像一桶水先装满再喝。</p>
+<p>第二种方式就叫<strong>"流"（stream）</strong>。这个项目处理的就是"流"。</p>
+</div>
 
-  <!-- TCP vs UDP -->
-  <div class="panel">
-    <h3>前置知识：TCP 与 UDP</h3>
-    <p>网络传输有两个最基本的协议——<strong>TCP</strong>（Transmission Control Protocol，传输控制协议）和 <strong>UDP</strong>（User Datagram Protocol，用户数据报协议）。理解它们的区别是理解后续所有流媒体协议的基础。</p>
-    <ul>
-      <li><strong>TCP</strong> —— 发送方每发一批数据，都会等接收方回复"收到了"，如果没收到就重发。所以 TCP <strong>保证数据完整、顺序正确、不丢失</strong>。代价是需要往返确认，速度稍慢。</li>
-      <li><strong>UDP</strong> —— 发送方只管发，不确认对方是否收到。所以 UDP <strong>速度快但可能丢数据、可能乱序</strong>。</li>
-    </ul>
-    <p>什么场景用哪个？文件传输、网页浏览、电子邮件——必须用 TCP（数据一点不能错）。视频通话、在线游戏——通常用 UDP（丢几帧无所谓，但延迟必须低）。流媒体推流通常用 TCP（画面完整性优先），实时通话通常用 UDP（低延迟优先）。</p>
-  </div>
+<div class="panel">
+<h3>数据怎么从一台电脑传到另一台：TCP 和 UDP</h3>
+<p>在讲具体视频传输方式之前，必须先讲一个更底层的东西。网络上两台电脑之间传数据，有两种最基本的"运送规则"。</p>
+<ul>
+  <li><strong>TCP</strong>（传输控制协议）：每发一包数据都要等对方回复"收到了"。没收到就重发。<strong>保证数据不丢、不乱、不少</strong>。代价是需要往返确认，速度会稍慢。就像挂号信——必须签收。</li>
+  <li><strong>UDP</strong>（用户数据报协议）：发了就不管了，不关心对方是否收到。<strong>速度快但可能丢数据</strong>。就像往信箱里塞传单——塞进去就不管了。</li>
+</ul>
+<p>文件下载、网页浏览——用 TCP（数据一点不能错）。在线游戏、视频通话——用 UDP（丢几帧无所谓但延迟必须低）。视频推流通常用 TCP——画面完整性比零点几秒延迟更重要。</p>
+</div>
 
-  <!-- RTMP -->
-  <div class="panel">
-    <h3>推流协议：RTMP</h3>
-    <p><strong>RTMP</strong>（Real-Time Messaging Protocol，实时消息传输协议）由 Adobe（原 Macromedia）设计，最初用于 Flash Player 和服务器之间的音视频传输。</p>
-    <p>RTMP 基于 <strong>TCP</strong>，所以数据不会丢。它的交互模式是"客户端主动连接到服务器，建立持久连接，然后在这个连接上持续推送音视频数据"。所以叫"推"流——客户端把数据推向服务器。</p>
-    <p>RTMP 的默认端口号是 <strong>1935</strong>。"端口号"可以理解为操作系统给每个网络程序分配的数字标识——操作系统收到网络数据后，根据端口号判断该把数据交给哪个程序。</p>
-    <p>在这个项目里，桌面客户端（Desktop）用 RTMP 把采集到的视频画面推送到 Service 的 ZLMediaKit。</p>
-  </div>
+<div class="diagram-box">
+<svg viewBox="0 0 720 130" xmlns="http://www.w3.org/2000/svg" style="max-width:720px;">
+  <!-- TCP -->
+  <rect x="10" y="10" width="340" height="110" rx="8" fill="#f1f5ff" stroke="#b8c8e8" stroke-width="1"/>
+  <text x="180" y="34" text-anchor="middle" fill="#141413" font-size="14" font-weight="500">TCP — 可靠传输</text>
+  <rect x="30" y="48" width="120" height="28" rx="6" fill="#cc785c" opacity="0.15"/>
+  <text x="90" y="67" text-anchor="middle" fill="#141413" font-size="12">发送方 → 数据包</text>
+  <text x="245" y="67" fill="#141413" font-size="12">→</text>
+  <rect x="265" y="48" width="65" height="28" rx="6" fill="#5db8a6" opacity="0.15"/>
+  <text x="297" y="67" text-anchor="middle" fill="#141413" font-size="12">接收方</text>
+  <text x="180" y="100" text-anchor="middle" fill="#6c6a64" font-size="11">"收到了！" ← 确认 ← "继续发"</text>
+  <!-- UDP -->
+  <rect x="370" y="10" width="340" height="110" rx="8" fill="#fff5f0" stroke="#e8c8b8" stroke-width="1"/>
+  <text x="540" y="34" text-anchor="middle" fill="#141413" font-size="14" font-weight="500">UDP — 尽力传输</text>
+  <rect x="390" y="48" width="120" height="28" rx="6" fill="#e8a55a" opacity="0.15"/>
+  <text x="450" y="67" text-anchor="middle" fill="#141413" font-size="12">发送方 → 数据包×3</text>
+  <text x="520" y="67" fill="#c64545" font-size="12">→ → →</text>
+  <rect x="600" y="48" width="90" height="28" rx="6" fill="#c64545" opacity="0.08"/>
+  <text x="645" y="67" text-anchor="middle" fill="#c64545" font-size="12">可能丢包 ✗</text>
+  <text x="540" y="100" text-anchor="middle" fill="#6c6a64" font-size="11">不确认 · 不重传 · 只求快</text>
+</svg>
+<p class="diagram-caption">TCP 每包确认；UDP 发了不管。视频推流用 TCP——画面完整性优先。</p>
+</div>
 
+<div class="panel">
+<h3>推流：RTMP</h3>
+<p>现在你知道了 TCP。RTMP（实时消息传输协议）就是建立在 TCP 之上的一种推流方式。它由 Adobe 公司设计，客户端主动连到服务器，建立一条 TCP 长连接，然后在这条连接上持续推送音视频数据。默认端口号 <strong>1935</strong>（端口号就是操作系统用来区分不同网络程序的数字标识——一个端口同一时刻只能被一个程序用）。</p>
+</div>
+
+<div class="panel">
+<h3>拉流方式一：HTTP-FLV</h3>
+<p>先解释 <strong>HTTP</strong>：你浏览器输入网址访问网页用的协议。浏览器向服务器发一个 HTTP 请求（"请把首页给我"），服务器返回 HTTP 响应（"好的，这是页面内容"）。HTTP 基于 TCP，数据可靠。</p>
+<p><strong>FLV</strong>（Flash Video）是一种视频的"包装格式"——规定了画面和声音数据怎么排列。同一段视频可以包装成不同格式。</p>
+<p><strong>HTTP-FLV</strong> 就是通过 HTTP 来传输 FLV 格式的视频流。播放端发一个 HTTP 请求，服务器不结束这个请求——而是持续往响应里追加 FLV 数据。播放端收到一段播一段。<strong>延迟 1-3 秒</strong>。缺点是 iPhone 自带的 Safari 浏览器对 FLV 支持不太好。</p>
+</div>
+
+<div class="diagram-box">
+<svg viewBox="0 0 660 160" xmlns="http://www.w3.org/2000/svg" style="max-width:660px;">
+  <text x="330" y="18" text-anchor="middle" fill="#141413" font-size="14" font-weight="500">两种拉流方式的对比</text>
   <!-- HTTP-FLV -->
-  <div class="panel">
-    <h3>拉流协议一：HTTP-FLV</h3>
-    <p><strong>FLV</strong>（Flash Video）是一种视频容器格式——它规定了音视频数据怎么打包到一个文件里。<strong>HTTP-FLV</strong> 的意思是：通过 HTTP 协议来传输 FLV 格式的视频流。</p>
-    <p>这里需要先理解 HTTP：HTTP（HyperText Transfer Protocol）就是你浏览器访问网页用的协议。你在地址栏输入 URL，浏览器向服务器发一个 HTTP 请求，服务器返回网页内容。HTTP 基于 TCP，所以也是可靠的。</p>
-    <p>HTTP-FLV 的做法是：播放端向服务器发一个 HTTP 请求，服务器不立即结束响应，而是持续不断地在响应体里追加 FLV 数据。播放端收到一段播一段。因为数据是持续推送的（不需要等"切片"），所以<strong>延迟很低，通常在 1-3 秒</strong>。</p>
-    <p>缺点是部分手机浏览器（特别是 iOS Safari）对 FLV 格式支持不好，需要借助额外的播放库。</p>
-  </div>
-
+  <rect x="15" y="35" width="300" height="112" rx="8" fill="#f1f5ff" stroke="#b8c8e8" stroke-width="1"/>
+  <text x="165" y="58" text-anchor="middle" fill="#141413" font-size="14" font-weight="500">HTTP-FLV</text>
+  <rect x="25" y="68" width="280" height="70" rx="4" fill="#faf9f5" stroke="#e6dfd8" stroke-width="0.5"/>
+  <text x="165" y="85" text-anchor="middle" fill="#6c6a64" font-size="11">服务器持续追加数据</text>
+  <text x="165" y="100" text-anchor="middle" fill="#6c6a64" font-size="11">→ ████████████ → (无限长)</text>
+  <text x="165" y="120" text-anchor="middle" fill="#6c6a64" font-size="11">播放端收到一段播一段</text>
+  <text x="165" y="140" text-anchor="middle" fill="#5db8a6" font-size="11" font-weight="500">延迟: 1~3秒 · 兼容性: 一般</text>
   <!-- HLS -->
-  <div class="panel">
-    <h3>拉流协议二：HLS</h3>
-    <p><strong>HLS</strong>（HTTP Live Streaming）是苹果公司 2009 年推出的流媒体协议。它的工作原理和 HTTP-FLV 完全不同：</p>
-    <ol>
-      <li>服务器把视频流<strong>切成一个个短小的 .ts 文件</strong>（每个文件通常 2 到 10 秒的内容，本项目是 2 秒）</li>
-      <li>同时维护一个<strong>索引文件</strong>（扩展名 .m3u8），里面列出了当前有哪些 .ts 片段、它们的顺序、以及播放地址</li>
-      <li>播放端先下载 .m3u8 索引，然后按顺序逐个请求并播放这些 .ts 片段</li>
-    </ol>
-    <p>HLS 的特点：</p>
-    <ul>
-      <li><strong>兼容性最好</strong> —— iOS、Android、所有主流浏览器都原生支持，不需要额外插件</li>
-      <li><strong>延迟较高</strong>（通常 5-10 秒）—— 因为必须等一个片段完全切完、封好文件，播放端才能下载到它</li>
-      <li><strong>容错性好</strong> —— 如果某一片段下载慢了，不影响已缓冲的后续片段；也可以随时切换到不同画质的流（自适应码率）</li>
-    </ul>
-    <p>在这套系统中，播放端可以根据场景选协议：需要低延迟用 HTTP-FLV，需要兼容性用 HLS。</p>
-  </div>
+  <rect x="345" y="35" width="300" height="112" rx="8" fill="#edfce9" stroke="#b8d8b0" stroke-width="1"/>
+  <text x="495" y="58" text-anchor="middle" fill="#141413" font-size="14" font-weight="500">HLS</text>
+  <rect x="355" y="68" width="280" height="70" rx="4" fill="#faf9f5" stroke="#e6dfd8" stroke-width="0.5"/>
+  <text x="495" y="85" text-anchor="middle" fill="#6c6a64" font-size="11">服务器切成 .ts 片段</text>
+  <text x="495" y="100" text-anchor="middle" fill="#6c6a64" font-size="11">→ [ts1] [ts2] [ts3] [ts4] →</text>
+  <text x="495" y="120" text-anchor="middle" fill="#6c6a64" font-size="11">播放端逐个下载片段播放</text>
+  <text x="495" y="140" text-anchor="middle" fill="#5db8a6" font-size="11" font-weight="500">延迟: 5~10秒 · 兼容性: 最好</text>
+</svg>
+<p class="diagram-caption">HTTP-FLV 靠持续追加数据获得低延迟（1-3秒）；HLS 靠切片获得广泛兼容性，但延迟更高（5-10秒）。项目中两种都提供，播放端按需选择。</p>
+</div>
 
-  <div class="soft-band">
-    <h3 style="font-family:var(--font-display); font-size:20px; font-weight:400; color:var(--color-black); margin-bottom:var(--space-md);">概念回顾</h3>
-    <dl class="glossary">
-      <div class="glossary-item"><dt>TCP</dt><dd>保证数据完整不丢失的传输协议，RTMP 和 HTTP-FLV 都基于它</dd></div>
-      <div class="glossary-item"><dt>RTMP</dt><dd>推流协议——采集端把视频"推"到服务器</dd></div>
-      <div class="glossary-item"><dt>HTTP-FLV</dt><dd>拉流协议——持续传输，延迟低（1-3秒），手机浏览器兼容性一般</dd></div>
-      <div class="glossary-item"><dt>HLS</dt><dd>拉流协议——切片式传输，兼容性最好，延迟稍高（5-10秒）</dd></div>
-      <div class="glossary-item"><dt>端口</dt><dd>操作系统用于区分不同网络程序的数字标识</dd></div>
-      <div class="glossary-item"><dt>协议转换</dt><dd>同一份音视频数据，用不同传输协议重新打包分发</dd></div>
-    </dl>
-  </div>
+<div class="panel">
+<h3>拉流方式二：HLS</h3>
+<p>HLS（HTTP 实时流传输）是苹果公司设计的，思路完全不同：服务器把视频流<strong>切成一个个 2 秒的 .ts 小文件</strong>（TS 是一种视频片段格式），同时维护一个 .m3u8 目录文件列出所有片段的地址和顺序。播放端先下载目录，再按顺序逐个下载并播放片段。</p>
+<ul>
+  <li><strong>兼容性最好</strong>—— iPhone、安卓、所有浏览器都原生支持，不需装任何东西</li>
+  <li><strong>延迟较高</strong>（5-10 秒）——因为必须等一个片段切完封好，播放端才能下载到</li>
+  <li><strong>容错性好</strong>——某片下载慢了不影响已缓冲的后续片段</li>
+</ul>
+<p>在这套系统中，播放端可以按需选择：低延迟用 HTTP-FLV，兼容性用 HLS。</p>
+</div>
+
+<div class="diagram-box">
+<svg viewBox="0 0 780 180" xmlns="http://www.w3.org/2000/svg" style="max-width:780px;">
+  <defs>
+    <marker id="h02a" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto"><path d="M0,0 L7,2.5 L0,5 Z" fill="#6c6a64"/></marker>
+  </defs>
+  <text x="390" y="18" text-anchor="middle" fill="#141413" font-size="14" font-weight="500">HLS 切片原理</text>
+  <!-- Stream bar -->
+  <rect x="30" y="40" width="720" height="28" rx="4" fill="#f5f0e8" stroke="#e6dfd8" stroke-width="0.8"/>
+  <text x="390" y="59" text-anchor="middle" fill="#6c6a64" font-size="12">原始视频流（持续不断的数据）</text>
+  <!-- Slices -->
+  <line x1="110" y1="68" x2="110" y2="82" stroke="#cc785c" stroke-width="1.5"/>
+  <line x1="270" y1="68" x2="270" y2="82" stroke="#cc785c" stroke-width="1.5"/>
+  <line x1="430" y1="68" x2="430" y2="82" stroke="#cc785c" stroke-width="1.5"/>
+  <line x1="590" y1="68" x2="590" y2="82" stroke="#cc785c" stroke-width="1.5"/>
+  <text x="70" y="78" text-anchor="middle" fill="#cc785c" font-size="10">← 2秒 →</text>
+  <text x="190" y="78" text-anchor="middle" fill="#6c6a64" font-size="9">切</text>
+  <text x="350" y="78" text-anchor="middle" fill="#6c6a64" font-size="9">切</text>
+  <text x="510" y="78" text-anchor="middle" fill="#6c6a64" font-size="9">切</text>
+  <!-- Segment boxes -->
+  <rect x="30" y="88" width="160" height="36" rx="6" fill="#edfce9" stroke="#b8d8b0" stroke-width="1"/>
+  <text x="110" y="110" text-anchor="middle" fill="#141413" font-size="12" font-weight="500">segment-001.ts</text>
+  <rect x="190" y="88" width="160" height="36" rx="6" fill="#edfce9" stroke="#b8d8b0" stroke-width="1"/>
+  <text x="270" y="110" text-anchor="middle" fill="#141413" font-size="12" font-weight="500">segment-002.ts</text>
+  <rect x="350" y="88" width="160" height="36" rx="6" fill="#edfce9" stroke="#b8d8b0" stroke-width="1"/>
+  <text x="430" y="110" text-anchor="middle" fill="#141413" font-size="12" font-weight="500">segment-003.ts</text>
+  <rect x="510" y="88" width="160" height="36" rx="6" fill="#f5f0e8" stroke="#e6dfd8" stroke-width="1" stroke-dasharray="3,2"/>
+  <text x="590" y="110" text-anchor="middle" fill="#8e8b82" font-size="12">segment-004.ts (正在生成...)</text>
+  <!-- m3u8 box -->
+  <rect x="170" y="142" width="440" height="30" rx="6" fill="#fff8e6" stroke="#e8d8b0" stroke-width="1"/>
+  <text x="390" y="161" text-anchor="middle" fill="#141413" font-size="11" font-weight="500">📄 playlist.m3u8（目录文件）："当前有 001.ts, 002.ts, 003.ts，按这个顺序播"</text>
+</svg>
+<p class="diagram-caption">HLS 把持续的视频流切成 2 秒的 .ts 片段，.m3u8 目录列出所有片段地址。播放端先下载目录，再逐个下载片段按序播放。每个片段必须先切完才能被下载——这就是延迟的来源。</p>
+</div>
+
+<div class="diagram-box">
+<svg viewBox="0 0 780 170" xmlns="http://www.w3.org/2000/svg" style="max-width:780px;">
+  <defs>
+    <marker id="p02a" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto"><path d="M0,0 L7,2.5 L0,5 Z" fill="#6c6a64"/></marker>
+  </defs>
+  <text x="390" y="18" text-anchor="middle" fill="#141413" font-size="14" font-weight="500">从采集到播放：一条视频流的完整旅程</text>
+  <rect x="15" y="45" width="95" height="100" rx="8" fill="#f5f0e8" stroke="#e6dfd8" stroke-width="1"/>
+  <text x="62" y="75" text-anchor="middle" fill="#141413" font-size="12" font-weight="500">📹 摄像头</text>
+  <text x="62" y="95" text-anchor="middle" fill="#6c6a64" font-size="10">采集画面</text>
+  <text x="62" y="110" text-anchor="middle" fill="#6c6a64" font-size="10">产生原始数据</text>
+  <text x="62" y="132" text-anchor="middle" fill="#8e8b82" font-size="9">(海量，未压缩)</text>
+  <text x="125" y="95" fill="#6c6a64" font-size="14">→</text>
+  <rect x="140" y="45" width="95" height="100" rx="8" fill="#fff5f0" stroke="#e8c8b8" stroke-width="1"/>
+  <text x="187" y="75" text-anchor="middle" fill="#141413" font-size="12" font-weight="500">🔧 编码器</text>
+  <text x="187" y="95" text-anchor="middle" fill="#6c6a64" font-size="10">压缩视频</text>
+  <text x="187" y="110" text-anchor="middle" fill="#6c6a64" font-size="10">H.264 / H.265</text>
+  <text x="187" y="132" text-anchor="middle" fill="#8e8b82" font-size="9">(数据量缩到1%)</text>
+  <text x="250" y="95" fill="#6c6a64" font-size="14">→</text>
+  <rect x="265" y="45" width="95" height="100" rx="8" fill="#f1f5ff" stroke="#b8c8e8" stroke-width="1"/>
+  <text x="312" y="75" text-anchor="middle" fill="#141413" font-size="12" font-weight="500">📦 RTMP 封装</text>
+  <text x="312" y="95" text-anchor="middle" fill="#6c6a64" font-size="10">打包数据</text>
+  <text x="312" y="110" text-anchor="middle" fill="#6c6a64" font-size="10">通过 TCP 发送</text>
+  <text x="312" y="132" text-anchor="middle" fill="#8e8b82" font-size="9">(可靠运输)</text>
+  <text x="375" y="95" fill="#6c6a64" font-size="14">→</text>
+  <rect x="390" y="45" width="130" height="100" rx="8" fill="#efe9de" stroke="#cc785c" stroke-width="1.5"/>
+  <text x="455" y="72" text-anchor="middle" fill="#141413" font-size="12" font-weight="500">📡 ZLMediaKit</text>
+  <text x="455" y="90" text-anchor="middle" fill="#6c6a64" font-size="10">接收 · 转封装</text>
+  <text x="455" y="105" text-anchor="middle" fill="#6c6a64" font-size="10">生成 HTTP-FLV</text>
+  <text x="455" y="120" text-anchor="middle" fill="#6c6a64" font-size="10">生成 HLS 片段</text>
+  <text x="455" y="138" text-anchor="middle" fill="#8e8b82" font-size="9">编码不变</text>
+  <text x="535" y="95" fill="#6c6a64" font-size="14">→</text>
+  <rect x="552" y="45" width="95" height="100" rx="8" fill="#edfce9" stroke="#b8d8b0" stroke-width="1"/>
+  <text x="599" y="75" text-anchor="middle" fill="#141413" font-size="12" font-weight="500">📱 播放端</text>
+  <text x="599" y="95" text-anchor="middle" fill="#6c6a64" font-size="10">下载 .ts / FLV</text>
+  <text x="599" y="110" text-anchor="middle" fill="#6c6a64" font-size="10">解码还原</text>
+  <text x="599" y="132" text-anchor="middle" fill="#8e8b82" font-size="9">(用户看到画面)</text>
+  <rect x="662" y="45" width="95" height="100" rx="8" fill="#f5f0e8" stroke="#e6dfd8" stroke-width="1"/>
+  <text x="710" y="75" text-anchor="middle" fill="#141413" font-size="12" font-weight="500">🖥 屏幕</text>
+  <text x="710" y="95" text-anchor="middle" fill="#6c6a64" font-size="10">显示画面</text>
+</svg>
+<p class="diagram-caption">从摄像头到屏幕的完整链路：采集 → 编码压缩 → RTMP 封装发送 → ZLMediaKit 转封装 → 播放端下载解码 → 用户看到画面。每一步都不可或缺。</p>
+</div>
+
+<div class="soft-band">
+<h3>本节概念速查</h3>
+<dl class="glossary">
+  <div class="glossary-item"><dt>视频流</dt><dd>持续传输、不需等完整文件的音视频数据。直播必须用流。</dd></div>
+  <div class="glossary-item"><dt>TCP</dt><dd>发一包确认一包的传输规则。数据不丢但稍慢。RTMP 和 HTTP 基于它。</dd></div>
+  <div class="glossary-item"><dt>UDP</dt><dd>发了不管的传输规则。速度快但可能丢数据。</dd></div>
+  <div class="glossary-item"><dt>RTMP</dt><dd>推流协议。客户端连服务器，持续推视频。默认端口 1935。</dd></div>
+  <div class="glossary-item"><dt>HTTP</dt><dd>浏览器看网页用的协议。基于 TCP，可靠。</dd></div>
+  <div class="glossary-item"><dt>HTTP-FLV</dt><dd>拉流方式。HTTP 持续传 FLV 格式视频。延迟 1-3 秒。iPhone 兼容性一般。</dd></div>
+  <div class="glossary-item"><dt>HLS</dt><dd>拉流方式。视频切成 2 秒小片段，.m3u8 目录串起来。兼容性最好，延迟 5-10 秒。</dd></div>
+  <div class="glossary-item"><dt>端口号</dt><dd>操作系统用来区分不同网络程序的数字。一个端口同时只能被一个程序用。</dd></div>
+</dl>
+</div>
 </section>
 
-<!-- ═══════════════════════════════════════════════════════════════
-   03 — ZLMediaKit 媒体引擎
-   ═══════════════════════════════════════════════════════════════ -->
+<!-- ════════════════ 03 ════════════════ -->
 <section class="func-section" id="s03">
-  <div class="section-number">03</div>
-  <h2 class="section-title">ZLMediaKit 媒体引擎</h2>
+<div class="section-number">03</div><h2 class="section-title">ZLMediaKit 媒体引擎</h2>
 
-  <div class="panel">
-    <h3>它是什么</h3>
-    <p>ZLMediaKit 是一个用 C++ 编写的高性能流媒体服务器程序，开源在 GitHub 上。在本项目中，它被作为<strong>预编译的二进制文件</strong>直接使用——也就是别人已经编译好的可执行程序，放在 <span class="inline-code">3rd/zlm/</span> 目录下（Windows 版是 <span class="inline-code">MediaServer.exe</span>，Linux 版是 <span class="inline-code">MediaServer</span>）。项目不需要重新编译它。</p>
-    <p>ZLMediaKit 支持非常多的流媒体协议：RTMP、RTSP、HLS、HTTP-FLV、WebRTC、SRT、TS、fMP4 等。但在这个项目中，主要用到的是 RTMP（接收推流）和 HTTP-FLV / HLS（对外分发）。</p>
-  </div>
+<div class="panel">
+<h3>它是什么</h3>
+<p>ZLMediaKit 是一个用 <strong>C++</strong>（一种以执行速度快著称的编程语言）编写的高性能流媒体服务器程序。源代码开源在 GitHub。本项目不使用它的源代码——而是直接用<strong>别人已经编译好的可执行文件</strong>（放在 <span class="inline-code">3rd/zlm/</span> 目录下，Windows 上叫 <span class="inline-code">MediaServer.exe</span>，Linux 上叫 <span class="inline-code">MediaServer</span>）。<strong>编译</strong>就是把人类可读的代码翻译成电脑能直接执行的机器指令。</p>
+<p>ZLMediaKit 支持很多协议，这个项目主要用到三种：<strong>RTMP</strong> 收推流，<strong>HTTP-FLV</strong> 和 <strong>HLS</strong> 对外分发。</p>
+</div>
 
-  <div class="panel">
-    <h3>协议转换是怎么做的</h3>
-    <p>首先要理解一个重要区分：<strong>视频编码</strong>和<strong>传输协议</strong>是两回事。</p>
-    <p>视频编码（如 H.264、H.265）决定画面怎么被压缩成数据。传输协议（如 RTMP、HLS）决定数据怎么被打包、走什么网络通道到达播放端。同一份 H.264 编码的视频数据，可以装在 RTMP 的包里传输，也可以切成 HLS 的 .ts 片段传输，也可以封装成 FLV 格式通过 HTTP 传输。</p>
-    <p><strong>协议转换</strong>——在流媒体领域更准确的叫法是<strong>"转封装"</strong>——就是：把通过协议 A 收到的音视频数据，解出里面的编码数据，然后用协议 B 的格式重新打包，通过协议 B 的通道发出去。<strong>不改变编码本身，只改变封装和传输方式</strong>。</p>
-    <p>ZLMediaKit 在收到 RTMP 推流后，会自动、实时地生成以下输出：</p>
-    <ul>
-      <li>RTMP 输出（供支持 RTMP 的播放器拉流）</li>
-      <li>HTTP-FLV 输出（供网页端、桌面端播放）</li>
-      <li>HLS 输出（.m3u8 + .ts 片段，供手机端播放）</li>
-    </ul>
-    <p>这一切是自动完成的——推流端只管推 RTMP，ZLMediaKit 自动在后台完成所有协议的转封装。</p>
-  </div>
+<div class="panel">
+<h3>"协议转换"到底做了什么——编码 vs 传输的区分</h3>
+<p>这里有一个很重要的区分：</p>
+<ul>
+  <li><strong>视频编码</strong>（如 H.264、H.265）：决定画面怎么被压缩成 0 和 1。摄像机拍到的原片数据量极大（一秒未压缩高清视频有几百 MB），必须压缩才能传。编码器负责压缩，解码器负责还原。</li>
+  <li><strong>传输协议</strong>（如 RTMP、HLS）：决定压缩后的 0 和 1 怎么打包、走什么路线到目的地。不关心包里装的是什么编码，只管怎么运。</li>
+</ul>
+<p>同一份 H.264 编码的视频数据，可以装在 RTMP 包里运输，也可以切成 HLS 的 .ts 片段运输，也可以装进 FLV 格式通过 HTTP 运输。<strong>内容没变，只是运输方式变了</strong>。</p>
+<p><strong>"协议转换"更准确的名字是"转封装"</strong>——把通过 A 协议收到的包裹拆开，取出里面的视频编码数据，然后用 B 协议的包装方式重新打包发出去。<strong>编码不改，只换包装和运输方式</strong>。ZLMediaKit 在收到 RTMP 推流后会自动实时生成 RTMP、HTTP-FLV、HLS 三套输出。</p>
+</div>
 
-  <div class="panel">
-    <h3>关键配置：关闭"按需"</h3>
-    <p>ZLMediaKit 有一个配置项叫"按需拉流"（on-demand）。如果开启这个选项，ZLMediaKit 只有在有播放端请求某个协议时才会开始生成该协议的输出。如果没人看，就不生成。省计算资源。</p>
-    <p>这个项目选择<strong>关闭所有协议的按需</strong>——推流一到达，所有协议输出立刻开始生成，不管有没有人在看。代价是始终占用 CPU 做转封装。好处是<strong>首帧播放延迟极低</strong>：第一个播放端请求到达时，数据已经准备好了，不需要等待转换启动。</p>
-    <p>HLS 的切片参数也为此做了优化：每片 2 秒（常规是 6-10 秒），保留最近 5 个分片，保留 3 个在线。切片越短，播放端从"请求播放"到"看到画面"的等待时间越短。</p>
+<div class="diagram-box">
+<svg viewBox="0 0 780 180" xmlns="http://www.w3.org/2000/svg" style="max-width:780px;">
+  <defs>
+    <marker id="z03a" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto"><path d="M0,0 L7,2.5 L0,5 Z" fill="#cc785c"/></marker>
+    <marker id="z03b" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto"><path d="M0,0 L7,2.5 L0,5 Z" fill="#5db8a6"/></marker>
+  </defs>
+  <!-- Input -->
+  <rect x="15" y="45" width="130" height="80" rx="8" fill="#f5f0e8" stroke="#cc785c" stroke-width="1.5"/>
+  <text x="80" y="75" text-anchor="middle" fill="#141413" font-size="13" font-weight="500">RTMP 推流</text>
+  <text x="80" y="95" text-anchor="middle" fill="#6c6a64" font-size="10">(H.264 编码数据)</text>
+  <text x="80" y="112" text-anchor="middle" fill="#6c6a64" font-size="10">用 RTMP 包装运输</text>
+  <!-- Arrow -->
+  <line x1="145" y1="85" x2="215" y2="85" stroke="#cc785c" stroke-width="1.5" marker-end="url(#z03a)"/>
+  <!-- ZLM box -->
+  <rect x="220" y="15" width="280" height="140" rx="10" fill="#efe9de" stroke="#e6dfd8" stroke-width="1.5"/>
+  <text x="360" y="42" text-anchor="middle" fill="#141413" font-size="15" font-weight="600">📡 ZLMediaKit</text>
+  <line x1="240" y1="54" x2="480" y2="54" stroke="#e6dfd8" stroke-width="0.5"/>
+  <text x="360" y="72" text-anchor="middle" fill="#6c6a64" font-size="11">拆包 → 取出 H.264 编码数据 → 重新打包</text>
+  <text x="360" y="90" text-anchor="middle" fill="#6c6a64" font-size="11">（编码本身不变，只换运输包装）</text>
+  <text x="360" y="115" text-anchor="middle" fill="#6c6a64" font-size="10">这个过程叫"转封装"</text>
+  <text x="360" y="135" text-anchor="middle" fill="#8e8b82" font-size="10">不叫"转码"——转码要重新压缩，计算量大得多</text>
+  <!-- Outputs -->
+  <line x1="500" y1="65" x2="570" y2="45" stroke="#5db8a6" stroke-width="1.2" marker-end="url(#z03b)"/>
+  <rect x="575" y="25" width="185" height="32" rx="6" fill="#edfce9" stroke="#b8d8b0" stroke-width="1"/>
+  <text x="667" y="45" text-anchor="middle" fill="#141413" font-size="12" font-weight="500">→ RTMP 输出</text>
+  <line x1="500" y1="85" x2="570" y2="85" stroke="#5db8a6" stroke-width="1.2" marker-end="url(#z03b)"/>
+  <rect x="575" y="68" width="185" height="32" rx="6" fill="#edfce9" stroke="#b8d8b0" stroke-width="1"/>
+  <text x="667" y="88" text-anchor="middle" fill="#141413" font-size="12" font-weight="500">→ HTTP-FLV 输出</text>
+  <line x1="500" y1="105" x2="570" y2="125" stroke="#5db8a6" stroke-width="1.2" marker-end="url(#z03b)"/>
+  <rect x="575" y="110" width="185" height="32" rx="6" fill="#edfce9" stroke="#b8d8b0" stroke-width="1"/>
+  <text x="667" y="130" text-anchor="middle" fill="#141413" font-size="12" font-weight="500">→ HLS 输出 (m3u8 + ts)</text>
+</svg>
+<p class="diagram-caption">ZLMediaKit 收到一份 RTMP 推流（H.264 编码），拆包取出编码数据，重新打包成三种输出。编码不变，只换包装。</p>
+</div>
 
-    <div class="code-block"><span class="cmt"># ZLMediaKit config.ini — 关键配置</span>
+<div class="panel">
+<h3>一个重要的配置：关掉"按需"</h3>
+<p>ZLMediaKit 里有一个选项叫"按需拉流"（on-demand）。开启时：没有播放端请求就不生成输出，有人请求才临时开始。省 CPU（中央处理器，电脑的计算核心）和内存。</p>
+<p>本项目选择<strong>全部关掉</strong>——推流一到达，所有协议输出立刻同时生成。代价是始终消耗 CPU 做转封装。好处是<strong>第一个播放端打开时几乎秒播</strong>——数据已就绪，不用等转换启动。HLS 切片也做了优化：每片 2 秒（常规 6-10 秒），保留最近 5 片。</p>
+<div class="code-block"><span class="cmt"># ZLMediaKit 配置文件 config.ini 中的关键设置</span>
 <span class="kw">[protocol]</span>
-enable_hls=1
-enable_rtmp=1
-enable_rtsp=1
-enable_fmp4=1
-hls_demand=0          <span class="cmt"># 关闭 HLS 按需 → 推流即转</span>
-rtmp_demand=0         <span class="cmt"># 关闭 RTMP 按需</span>
+enable_hls=1          <span class="cmt"># 开启 HLS 协议支持</span>
+enable_rtmp=1         <span class="cmt"># 开启 RTMP 协议支持</span>
+hls_demand=0          <span class="cmt"># 0 = 关闭按需 → 推流即转</span>
 
 <span class="kw">[hls]</span>
-segDur=2              <span class="cmt"># 切片时长 2 秒（低延迟）</span>
-segNum=3              <span class="cmt"># 每个 m3u8 里保留 3 个切片</span>
-segRetain=5           <span class="cmt"># 磁盘上保留 5 个切片</span></div>
-  </div>
+segDur=2              <span class="cmt"># 每个 .ts 片段 2 秒（越短首屏越快）</span>
+segNum=3              <span class="cmt"># .m3u8 里保留 3 个片段的索引</span>
+segRetain=5           <span class="cmt"># 磁盘保留 5 个片段</span></div>
+</div>
 </section>
 
-<!-- ═══════════════════════════════════════════════════════════════
-   04 — Gateway API 网关
-   ═══════════════════════════════════════════════════════════════ -->
+<!-- ════════════════ 04 ════════════════ -->
 <section class="func-section" id="s04">
-  <div class="section-number">04</div>
-  <h2 class="section-title">Gateway API 网关</h2>
+<div class="section-number">04</div><h2 class="section-title">Gateway API 网关</h2>
 
-  <div class="panel">
-    <h3>它是什么</h3>
-    <p>Gateway 是一个用 Go 语言编写的 HTTP 服务程序。什么是 HTTP 服务？就是一段程序，它在某个端口上监听，收到 HTTP 请求后根据 URL 路径执行对应的逻辑，然后返回 HTTP 响应（通常是 JSON 格式的数据）。</p>
-    <p>Gateway 的特点：</p>
-    <ul>
-      <li><strong>单文件</strong>：全部代码在 <span class="inline-code">gateway/main.go</span> 一个文件里，约 860 行</li>
-      <li><strong>零外部依赖</strong>：不依赖任何第三方 Go 库，只用 Go 语言自带的"标准库"（net/http、encoding/json、sync 等）</li>
-      <li><strong>编译后自包含</strong>：编译产物是一个独立的可执行文件，拷贝到任意同架构的机器上就能运行，不需要安装 Go 运行时</li>
-    </ul>
-  </div>
+<div class="panel">
+<h3>它是什么</h3>
+<p>Gateway 是一个用 <strong>Go 语言</strong>（Google 设计的编程语言，特点是编译出来的程序是一个独立文件，不需要在目标电脑上装 Go 环境就能运行）编写的 <strong>HTTP 服务</strong>程序。HTTP 服务就是一段在某个端口上监听、收到 HTTP 请求后根据 URL 路径执行对应逻辑、然后返回 HTTP 响应（通常是 <strong>JSON</strong> 格式）的程序。<strong>JSON</strong> 是一种用纯文本表示结构化数据的方式——比如 <span class="inline-code">{"name":"张三","age":30}</span>，花括号包着键值对，人和程序都能读懂。</p>
+<p>Gateway 的特点：全部代码在一个文件里（约 860 行）；不依赖任何第三方 Go 库，只用 Go 自带的<strong>标准库</strong>（语言出厂自带的工具集）；编译后拷贝到任何同类型电脑就能跑。</p>
+</div>
 
-  <div class="panel">
-    <h3>全部 API 端点</h3>
-    <p>Gateway 通过以下 8 个 URL 路径对外提供服务（假设 Gateway 运行在 9000 端口）：</p>
-    <div class="comp-table-wrap">
-      <table class="comp-table">
-        <thead><tr><th>方法</th><th>路径</th><th>说明</th></tr></thead>
-        <tbody>
-          <tr><td><strong>GET</strong></td><td><span class="inline-code">/healthz</span></td><td>健康检查。返回 <span class="inline-code">{"status":"ok"}</span>。所有启动器都通过轮询这个接口判断 Gateway 是否就绪</td></tr>
-          <tr><td><strong>POST</strong></td><td><span class="inline-code">/api/v1/streams/start</span></td><td>创建流。请求体传入 app、stream、serviceMode。同一个 app+stream 重复调用不报错，直接返回已有结果（幂等）</td></tr>
-          <tr><td><strong>GET</strong></td><td><span class="inline-code">/api/v1/streams/resolve</span></td><td>按名称查地址。URL 参数传 app 和 stream，不传流 ID。专为播放端设计——播放端只知道名称</td></tr>
-          <tr><td><strong>GET</strong></td><td><span class="inline-code">/api/v1/streams/{id}/status</span></td><td>查询指定流的状态，URL 路径里包含流 ID。返回状态、推流地址、各协议播放地址</td></tr>
-          <tr><td><strong>POST</strong></td><td><span class="inline-code">/api/v1/streams/{id}/stop</span></td><td>停止指定流。在 Gateway 内存中将其状态标记为 "stopped"</td></tr>
-          <tr><td><strong>GET</strong></td><td><span class="inline-code">/api/v1/streams</span></td><td>列出当前所有流会话</td></tr>
-          <tr><td><strong>GET</strong></td><td><span class="inline-code">/api/v1/debug/logs</span></td><td>查看 ZLM、Gateway、UI 的运行日志尾部内容。支持 limit 参数（最大 2000 行）。调试用</td></tr>
-          <tr><td><strong>GET</strong></td><td><span class="inline-code">/api/v1/debug/network</span></td><td>查看当前网络状态：主机地址、各端口号、公网代理状态、操作系统。调试用</td></tr>
-        </tbody>
-      </table>
-    </div>
-  </div>
+<div class="panel">
+<h3>什么叫"API"</h3>
+<p><strong>API</strong>（应用程序编程接口）。这个词听起来很技术，但意思很简单：<strong>两个程序之间约定好的一套对话方式</strong>。Desktop 想创建一个流，它不能用人话对 Gateway 说——它必须按 Gateway 规定的格式：往某个 URL 发 POST 请求，请求体里放一段 JSON，写上 app、stream、serviceMode 这几个字段。Gateway 收到后按约定返回一段 JSON，里面包含推流地址和播放地址。</p>
+<p>Gateway 一共提供 8 个这样的"约定"（API 端点）。<strong>GET</strong> 意思是"我要获取数据"，<strong>POST</strong> 意思是"我要提交数据让你做一件事"：</p>
+<div class="comp-table-wrap">
+<table class="comp-table">
+<thead><tr><th>方法</th><th>URL 路径</th><th>用来做什么</th></tr></thead>
+<tbody>
+  <tr><td><strong>GET</strong></td><td><span class="inline-code">/healthz</span></td><td>健康检查——问"你活着吗"，答"活着"。返回 <span class="inline-code">{"status":"ok"}</span></td></tr>
+  <tr><td><strong>POST</strong></td><td><span class="inline-code">/api/v1/streams/start</span></td><td>创建流——传 app、stream、mode，返回推流和播放地址。同参数重复调不报错</td></tr>
+  <tr><td><strong>GET</strong></td><td><span class="inline-code">/api/v1/streams/resolve</span></td><td>按名称查地址——只传 app+stream。播放端不需要知道流 ID</td></tr>
+  <tr><td><strong>GET</strong></td><td><span class="inline-code">/api/v1/streams/{id}/status</span></td><td>查某个流的状态和播放地址（URL 里带流 ID）</td></tr>
+  <tr><td><strong>POST</strong></td><td><span class="inline-code">/api/v1/streams/{id}/stop</span></td><td>停止流——标记为 "stopped"</td></tr>
+  <tr><td><strong>GET</strong></td><td><span class="inline-code">/api/v1/streams</span></td><td>列出当前所有流</td></tr>
+  <tr><td><strong>GET</strong></td><td><span class="inline-code">/api/v1/debug/logs</span></td><td>查看各组件的运行日志</td></tr>
+  <tr><td><strong>GET</strong></td><td><span class="inline-code">/api/v1/debug/network</span></td><td>查看当前网络状态：IP、端口号等</td></tr>
+</tbody>
+</table>
+</div>
 
-  <div class="panel">
-    <h3>三种服务模式</h3>
-    <p>创建流时，<span class="inline-code">serviceMode</span> 参数决定 Gateway 生成哪些协议的播放地址：</p>
-    <div class="card-grid" style="grid-template-columns: repeat(3, 1fr);">
-      <div class="card">
-        <h4>direct</h4>
-        <p>仅生成 RTMP 播放地址。最精简，适合纯 RTMP 播放场景。</p>
-        <span class="card-tag">RTMP only</span>
-      </div>
-      <div class="card">
-        <h4>broadcast</h4>
-        <p>同时生成 RTMP + HTTP-FLV + HLS。覆盖所有主流播放方式。</p>
-        <span class="card-tag">全协议</span>
-      </div>
-      <div class="card">
-        <h4>httpflv</h4>
-        <p>行为与 broadcast 一致（也生成 RTMP + HTTP-FLV + HLS）。名称是历史遗留，表示侧重网页端场景。</p>
-        <span class="card-tag">Web 友好</span>
-      </div>
-    </div>
-  </div>
+<div class="diagram-box">
+<svg viewBox="0 0 640 155" xmlns="http://www.w3.org/2000/svg" style="max-width:640px;">
+  <defs>
+    <marker id="g04a" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto"><path d="M0,0 L7,2.5 L0,5 Z" fill="#cc785c"/></marker>
+    <marker id="g04b" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto"><path d="M0,0 L7,2.5 L0,5 Z" fill="#5db8a6"/></marker>
+  </defs>
+  <text x="320" y="18" text-anchor="middle" fill="#141413" font-size="14" font-weight="500">API 调用过程（以"创建流"为例）</text>
+  <rect x="15" y="55" width="170" height="85" rx="8" fill="#f5f0e8" stroke="#e6dfd8" stroke-width="1"/>
+  <text x="100" y="80" text-anchor="middle" fill="#141413" font-size="13" font-weight="500">Desktop（调用方）</text>
+  <text x="100" y="98" text-anchor="middle" fill="#6c6a64" font-size="10">发 HTTP POST 请求</text>
+  <text x="100" y="113" text-anchor="middle" fill="#6c6a64" font-size="10">URL: /api/v1/streams/start</text>
+  <text x="100" y="128" text-anchor="middle" fill="#6c6a64" font-size="10">Body: {"app":"live",...}</text>
+  <line x1="185" y1="85" x2="255" y2="85" stroke="#cc785c" stroke-width="1.5" marker-end="url(#g04a)"/>
+  <text x="220" y="78" text-anchor="middle" fill="#cc785c" font-size="9">Request</text>
+  <rect x="260" y="35" width="160" height="105" rx="8" fill="#efe9de" stroke="#cc785c" stroke-width="1.5"/>
+  <text x="340" y="58" text-anchor="middle" fill="#141413" font-size="13" font-weight="500">Gateway 处理</text>
+  <line x1="275" y1="67" x2="405" y2="67" stroke="#e6dfd8" stroke-width="0.5"/>
+  <text x="340" y="81" text-anchor="middle" fill="#6c6a64" font-size="10">幂等检查 → 生成 ID</text>
+  <text x="340" y="95" text-anchor="middle" fill="#6c6a64" font-size="10">→ 拼接地址 → 存入 map</text>
+  <text x="340" y="109" text-anchor="middle" fill="#6c6a64" font-size="10">→ 返回 JSON 响应</text>
+  <text x="340" y="128" text-anchor="middle" fill="#8e8b82" font-size="9">全程只用 Go 标准库</text>
+  <line x1="420" y1="95" x2="495" y2="95" stroke="#5db8a6" stroke-width="1.5" marker-end="url(#g04b)"/>
+  <text x="457" y="88" text-anchor="middle" fill="#5db8a6" font-size="9">Response</text>
+  <rect x="500" y="58" width="125" height="80" rx="8" fill="#edfce9" stroke="#b8d8b0" stroke-width="1"/>
+  <text x="562" y="82" text-anchor="middle" fill="#141413" font-size="12" font-weight="500">JSON 响应</text>
+  <text x="562" y="100" text-anchor="middle" fill="#6c6a64" font-size="10">publishRtmp: ...</text>
+  <text x="562" y="115" text-anchor="middle" fill="#6c6a64" font-size="10">playHttpFlv: ...</text>
+  <text x="562" y="130" text-anchor="middle" fill="#6c6a64" font-size="10">playHls: ...</text>
+</svg>
+<p class="diagram-caption">API 调用过程：调用方发 HTTP 请求（带 JSON 参数）→ Gateway 内部处理 → 返回 JSON 响应。全程通过网络完成，双方不需要在同一程序里。</p>
+</div>
+</div>
 
-  <div class="panel">
-    <h3>数据存储方式</h3>
-    <p>Gateway 把所有流信息存在<strong>进程内存</strong>中：</p>
-    <div class="code-block"><span class="cmt">// gateway/main.go — 核心数据结构</span>
-<span class="kw">var</span> (
-    mu      sync.RWMutex         <span class="cmt">// 读写锁</span>
-    streams = <span class="kw">map</span>[<span class="type">string</span>]*<span class="type">streamRecord</span>{}  <span class="cmt">// 键=流ID, 值=流信息</span>
-)</div>
-    <p>用 <span class="inline-code">map</span>（映射表/字典）存储，以随机生成的 16 位十六进制字符串作为键（即流 ID）。</p>
-    <p><span class="inline-code">sync.RWMutex</span> 是一个读写锁——它解决的是"多个请求同时操作同一份数据"的并发安全问题：读操作可以多个同时进行（不会互相干扰），写操作必须独占（写的时候其他人不能读也不能写）。</p>
-    <p>这意味着<strong>Gateway 重启后所有流数据都会丢失</strong>。这是有意为之——参见<a href="#s12">第 12 节设计决策</a>。</p>
-  </div>
+<div class="panel">
+<h3>三种模式 / 数据存哪 / 幂等</h3>
+<p>创建流时有三种 <span class="inline-code">serviceMode</span>：<strong>direct</strong>（仅生成 RTMP 地址）、<strong>broadcast</strong>（RTMP+HTTP-FLV+HLS 全生成）、<strong>httpflv</strong>（和 broadcast 一样，历史名称）。</p>
+<p>流数据存在<strong>程序内存</strong>里——用一个叫 <span class="inline-code">map</span> 的结构（可以理解为一本字典：给定流 ID 立刻查到对应的流信息，不用从第一条开始翻）。用<strong>读写锁</strong>（<span class="inline-code">RWMutex</span>）保护——读操作可同时进行互不干扰，写操作必须独占。因为 Gateway 可能同时处理 Desktop 的创建请求和 Mobile 的查询请求，这就是<strong>并发</strong>——多个操作在同一时刻发生。</p>
 
-  <div class="panel">
-    <h3>"幂等"是什么意思</h3>
-    <p>在计算机科学中，幂等（Idempotent）指：<strong>同一个操作执行一次和执行多次，结果相同</strong>。</p>
-    <p>Gateway 的 <span class="inline-code">POST /api/v1/streams/start</span> 接口是幂等的。如果你两次用相同的 app + stream 参数调用它：第一次正常创建并返回流信息；第二次不会报错，也不会创建新流——直接在内存中找到第一次创建的记录，返回同样的信息。</p>
-    <p>这样设计的好处是：调用方（Desktop）不需要自己判断"这个流是不是已经创建过了"。只管调，Gateway 自己处理重复的情况。</p>
-  </div>
+<div class="diagram-box">
+<svg viewBox="0 0 680 120" xmlns="http://www.w3.org/2000/svg" style="max-width:680px;">
+  <text x="340" y="16" text-anchor="middle" fill="#141413" font-size="13" font-weight="500">读写锁 (RWMutex) 如何保护并发安全</text>
+  <rect x="15" y="35" width="200" height="70" rx="8" fill="#f5f0e8" stroke="#e6dfd8" stroke-width="1"/>
+  <text x="115" y="58" text-anchor="middle" fill="#141413" font-size="12" font-weight="500">Desktop → 创建流</text>
+  <text x="115" y="75" text-anchor="middle" fill="#c64545" font-size="10">需要「写锁」（独占）</text>
+  <text x="115" y="92" text-anchor="middle" fill="#6c6a64" font-size="10">写入时其他人不能读也不能写</text>
+  <text x="235" y="70" fill="#6c6a64" font-size="14">⇅</text>
+  <rect x="260" y="35" width="200" height="70" rx="8" fill="#f5f0e8" stroke="#e6dfd8" stroke-width="1"/>
+  <text x="360" y="58" text-anchor="middle" fill="#141413" font-size="12" font-weight="500">Mobile A → 查询流</text>
+  <text x="360" y="75" text-anchor="middle" fill="#5db8a6" font-size="10">只需要「读锁」（共享）</text>
+  <text x="360" y="92" text-anchor="middle" fill="#6c6a64" font-size="10">读锁可多个同时持有</text>
+  <text x="480" y="70" fill="#6c6a64" font-size="14">⇅</text>
+  <rect x="505" y="35" width="160" height="70" rx="8" fill="#f5f0e8" stroke="#e6dfd8" stroke-width="1"/>
+  <text x="585" y="58" text-anchor="middle" fill="#141413" font-size="12" font-weight="500">Mobile B → 查询流</text>
+  <text x="585" y="75" text-anchor="middle" fill="#5db8a6" font-size="10">只需要「读锁」</text>
+  <text x="585" y="92" text-anchor="middle" fill="#6c6a64" font-size="10">可以和 A 同时读</text>
+</svg>
+<p class="diagram-caption">读写锁规则：多个读操作可以同时进行（互不干扰），但写操作必须独占（写的时候其他人不能读也不能写）。这保证了任何时刻数据都是完整正确的。</p>
+</div>
+
+<p><strong>幂等</strong>：同一个操作执行一次和十次结果相同。Gateway 的创建流接口是幂等的——第二次用相同名调用不会报错也不会创建重复流，直接返回第一次的结果。调用方不用自己判断"我是不是创建过了"。</p>
+</div>
 </section>
 
-<!-- ═══════════════════════════════════════════════════════════════
-   05 — 流会话管理
-   ═══════════════════════════════════════════════════════════════ -->
+<!-- ════════════════ 05 ════════════════ -->
 <section class="func-section" id="s05">
-  <div class="section-number">05</div>
-  <h2 class="section-title">流会话管理</h2>
+<div class="section-number">05</div><h2 class="section-title">流会话管理</h2>
 
-  <div class="panel">
-    <h3>一次完整的流会话长什么样</h3>
-    <p>在 Gateway 里，一次视频流的全过程被抽象为一个"会话"（session）。从创建到停止，涉及四个环节：</p>
-    <div class="timeline">
-      <div class="timeline-step done">
-        <div class="timeline-dot"></div>
-        <h4>环节一：创建会话</h4>
-        <p>Desktop 向 Gateway 发 <span class="inline-code">POST /api/v1/streams/start</span>，传入 app（应用名）、stream（流名）、serviceMode（模式）。Gateway 先做幂等检查——如果已有同名运行中的流，直接返回已有记录。否则：生成 16 位随机 ID → 创建流记录 → 拼推流和播放地址 → 存入内存 → 返回 JSON。</p>
-      </div>
-      <div class="timeline-step done">
-        <div class="timeline-dot"></div>
-        <h4>环节二：推流</h4>
-        <p>Desktop 拿到返回的 <span class="inline-code">publishRtmp</span> 地址，通过 RTMP 协议把视频数据持续推送到 ZLMediaKit。ZLMediaKit 实时转封装出 HTTP-FLV 和 HLS 输出。</p>
-      </div>
-      <div class="timeline-step done">
-        <div class="timeline-dot"></div>
-        <h4>环节三：查询与拉流</h4>
-        <p>播放端（Mobile 或另一个 Desktop）向 Gateway 发 <span class="inline-code">GET /api/v1/streams/resolve?app=live&stream=stream001</span>。Gateway 在内存中找到对应记录，返回播放地址。播放端用这些地址向 ZLMediaKit 请求视频数据并播放。</p>
-      </div>
-      <div class="timeline-step done">
-        <div class="timeline-dot"></div>
-        <h4>环节四：停止</h4>
-        <p>推流端调用 <span class="inline-code">POST /api/v1/streams/{id}/stop</span>。Gateway 把该记录的状态标记为 "stopped"。注意：这只是修改了 Gateway 里的标记，ZLMediaKit 中的流生命周期由 ZLMediaKit 自己管理。</p>
-      </div>
-    </div>
-  </div>
+<div class="panel">
+<h3>什么是"会话"</h3>
+<p><strong>会话</strong>（session）在计算机里指"从开始做一件事到结束之间的整段过程和所有信息"。你登录网站 → 服务器创建会话记住你是谁 → 你浏览下单留言都属于这个会话 → 退出登录会话结束。Gateway 里一个"流会话"就是从创建到停止的整段过程——谁创建的、叫什么、什么模式、推流播放地址分别是什么、当前状态。</p>
+</div>
 
-  <div class="diagram-box">
-    <svg viewBox="0 0 800 180" xmlns="http://www.w3.org/2000/svg" style="max-width:800px;">
-      <defs>
-        <marker id="ms1" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto"><path d="M0,0 L7,2.5 L0,5 Z" fill="#1863dc"/></marker>
-        <marker id="ms2" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto"><path d="M0,0 L7,2.5 L0,5 Z" fill="#75758a"/></marker>
-      </defs>
-      <rect x="20" y="60" width="160" height="60" rx="6" fill="var(--color-canvas)" stroke="var(--color-hairline)" stroke-width="1"/>
-      <text x="100" y="85" text-anchor="middle" fill="var(--color-black)" font-family="var(--font-body)" font-size="13" font-weight="500">Desktop（推流端）</text>
-      <text x="100" y="105" text-anchor="middle" fill="var(--color-slate)" font-family="var(--font-body)" font-size="11">采集 → 推 RTMP</text>
+<div class="diagram-box">
+<svg viewBox="0 0 780 340" xmlns="http://www.w3.org/2000/svg" style="max-width:780px;">
+  <defs>
+    <marker id="s05a" markerWidth="6" markerHeight="4" refX="6" refY="2" orient="auto"><path d="M0,0 L6,2 L0,4 Z" fill="#cc785c"/></marker>
+    <marker id="s05b" markerWidth="6" markerHeight="4" refX="6" refY="2" orient="auto"><path d="M0,0 L6,2 L0,4 Z" fill="#6c6a64"/></marker>
+  </defs>
+  <!-- 1 -->
+  <rect x="20" y="15" width="340" height="62" rx="8" fill="#f5f0e8" stroke="#cc785c" stroke-width="1"/>
+  <circle cx="45" cy="46" r="12" fill="#cc785c"/><text x="45" y="51" text-anchor="middle" fill="#fff" font-size="11" font-weight="600">1</text>
+  <text x="65" y="42" fill="#141413" font-size="13" font-weight="500">创建会话</text>
+  <text x="65" y="60" fill="#6c6a64" font-size="11">Desktop → POST /api/v1/streams/start → Gateway 生成 ID + 地址 → 返回 JSON</text>
+  <line x1="360" y1="46" x2="400" y2="46" stroke="#cc785c" stroke-width="1.2" marker-end="url(#s05a)"/>
+  <!-- 2 -->
+  <rect x="405" y="15" width="350" height="62" rx="8" fill="#edfce9" stroke="#b8d8b0" stroke-width="1"/>
+  <circle cx="430" cy="46" r="12" fill="#5db8a6"/><text x="430" y="51" text-anchor="middle" fill="#fff" font-size="11" font-weight="600">2</text>
+  <text x="450" y="42" fill="#141413" font-size="13" font-weight="500">推流</text>
+  <text x="450" y="60" fill="#6c6a64" font-size="11">Desktop → RTMP 推流到 ZLMediaKit → ZLM 自动转封装 (HTTP-FLV + HLS)</text>
+  <line x1="580" y1="77" x2="580" y2="115" stroke="#6c6a64" stroke-width="1.2" marker-end="url(#s05b)"/>
+  <!-- 3 -->
+  <rect x="405" y="120" width="350" height="62" rx="8" fill="#f1f5ff" stroke="#b8c8e8" stroke-width="1"/>
+  <circle cx="430" cy="151" r="12" fill="#4c9aff"/><text x="430" y="156" text-anchor="middle" fill="#fff" font-size="11" font-weight="600">3</text>
+  <text x="450" y="147" fill="#141413" font-size="13" font-weight="500">查询 + 拉流</text>
+  <text x="450" y="165" fill="#6c6a64" font-size="11">Mobile → GET /resolve?app=...&stream=... → Gateway 返回地址 → Mobile 拉流播放</text>
+  <line x1="405" y1="151" x2="365" y2="151" stroke="#6c6a64" stroke-width="1.2" marker-end="url(#s05b)"/>
+  <!-- 4 -->
+  <rect x="20" y="120" width="340" height="62" rx="8" fill="#fff5f0" stroke="#e8c8b8" stroke-width="1"/>
+  <circle cx="45" cy="151" r="12" fill="#e8a55a"/><text x="45" y="156" text-anchor="middle" fill="#fff" font-size="11" font-weight="600">4</text>
+  <text x="65" y="147" fill="#141413" font-size="13" font-weight="500">停止</text>
+  <text x="65" y="165" fill="#6c6a64" font-size="11">POST /streams/{id}/stop → 状态标记 "stopped" → ZLM 独立管理流生命周期</text>
 
-      <rect x="270" y="20" width="180" height="55" rx="6" fill="var(--color-pale-blue)" stroke="var(--color-action-blue)" stroke-width="1"/>
-      <text x="360" y="42" text-anchor="middle" fill="var(--color-black)" font-family="var(--font-body)" font-size="13" font-weight="500">Gateway（API 网关）</text>
-      <text x="360" y="62" text-anchor="middle" fill="var(--color-slate)" font-family="var(--font-body)" font-size="11">会话记录 · 地址编排</text>
+  <!-- Control plane vs data plane -->
+  <rect x="100" y="220" width="260" height="28" rx="14" fill="#cc785c" opacity="0.1"/>
+  <text x="230" y="239" text-anchor="middle" fill="#141413" font-size="11">Gateway 管"控制面"：创建、查询、停止</text>
+  <rect x="440" y="220" width="260" height="28" rx="14" fill="#5db8a6" opacity="0.1"/>
+  <text x="570" y="239" text-anchor="middle" fill="#141413" font-size="11">ZLMediaKit 管"数据面"：收流、转换、分发</text>
 
-      <rect x="270" y="100" width="180" height="55" rx="6" fill="var(--color-pale-green)" stroke="#2d8a56" stroke-width="1"/>
-      <text x="360" y="122" text-anchor="middle" fill="var(--color-black)" font-family="var(--font-body)" font-size="13" font-weight="500">ZLMediaKit（媒体引擎）</text>
-      <text x="360" y="142" text-anchor="middle" fill="var(--color-slate)" font-family="var(--font-body)" font-size="11">协议转换 · 流分发</text>
+  <!-- Big arrow between them -->
+  <line x1="360" y1="234" x2="435" y2="234" stroke="#6c6a64" stroke-width="1" stroke-dasharray="4,2"/>
+  <text x="397" y="260" text-anchor="middle" fill="#8e8b82" font-size="10">通过环境变量传递端口信息</text>
 
-      <rect x="560" y="60" width="210" height="60" rx="6" fill="var(--color-canvas)" stroke="var(--color-hairline)" stroke-width="1"/>
-      <text x="665" y="85" text-anchor="middle" fill="var(--color-black)" font-family="var(--font-body)" font-size="13" font-weight="500">Mobile / Desktop（播放端）</text>
-      <text x="665" y="105" text-anchor="middle" fill="var(--color-slate)" font-family="var(--font-body)" font-size="11">查询地址 → 拉 HTTP-FLV/HLS</text>
-
-      <line x1="180" y1="80" x2="265" y2="55" stroke="#1863dc" stroke-width="1.2" marker-end="url(#ms1)"/>
-      <text x="210" y="55" text-anchor="middle" fill="#1863dc" font-size="9">① 创建流</text>
-      <line x1="180" y1="100" x2="265" y2="125" stroke="#75758a" stroke-width="1.2" marker-end="url(#ms2)"/>
-      <text x="210" y="140" text-anchor="middle" fill="#75758a" font-size="9">② 推流 (RTMP)</text>
-
-      <line x1="560" y1="90" x2="455" y2="90" stroke="#1863dc" stroke-width="1.2" marker-end="url(#ms1)"/>
-      <text x="510" y="85" text-anchor="middle" fill="#1863dc" font-size="9">③ 查地址</text>
-      <line x1="560" y1="105" x2="455" y2="130" stroke="#75758a" stroke-width="1.2" marker-end="url(#ms2)"/>
-      <text x="510" y="145" text-anchor="middle" fill="#75758a" font-size="9">④ 拉流 (HTTP-FLV/HLS)</text>
-
-      <line x1="360" y1="75" x2="360" y2="95" stroke="#75758a" stroke-width="0.8" stroke-dasharray="3,2"/>
-    </svg>
-    <p class="diagram-caption">流会话生命周期：创建 → 推流 → 转封装 → 拉流播放。①③走 Gateway（控制面），②④走 ZLMediaKit（数据面）</p>
-  </div>
+  <text x="390" y="300" text-anchor="middle" fill="#8e8b82" font-size="11">控制面 (Gateway) 和数据面 (ZLM) 分离：两者独立运行，通过端口号耦合</text>
+</svg>
+<p class="diagram-caption">一个流会话的四个环节。Gateway 管理控制面（创建/查询/停止），ZLMediaKit 管理数据面（实际媒体处理）。两者通过端口号信息耦合，彼此独立运行。</p>
+</div>
 </section>
 
-<!-- ═══════════════════════════════════════════════════════════════
-   06 — Electron 管理界面
-   ═══════════════════════════════════════════════════════════════ -->
+<!-- ════════════════ 06 ════════════════ -->
 <section class="func-section" id="s06">
-  <div class="section-number">06</div>
-  <h2 class="section-title">Electron 管理界面</h2>
+<div class="section-number">06</div><h2 class="section-title">Electron 管理界面</h2>
 
-  <div class="panel">
-    <h3>Electron 是什么</h3>
-    <p>要理解 Electron UI，需要先理解 Electron 框架本身。Electron 是一个开源框架，让你能用<strong>写网页的技术（HTML、CSS、JavaScript）来构建桌面窗口应用</strong>。</p>
-    <p>它本质上由两部分组成：</p>
-    <ul>
-      <li><strong>Chromium</strong>：Google Chrome 浏览器的开源内核，负责渲染网页界面、执行 JavaScript。你把 HTML 和 CSS 写好，Chromium 负责把它们显示成窗口内容</li>
-      <li><strong>Node.js</strong>：一个让 JavaScript 脱离浏览器、在操作系统层面运行的运行时。它能读写本地文件、启动子进程、访问网络——普通浏览器里的 JavaScript 是做不到这些的（出于安全限制）</li>
-    </ul>
-    <p>Electron 把 Chromium 和 Node.js 嵌在一个可执行程序里。界面用网页技术写（简单），系统操作用 Node.js 做（能力强）。两者通过 IPC（Inter-Process Communication，进程间通信）协作。</p>
-  </div>
+<div class="panel">
+<h3>Electron 是什么</h3>
+<p>要理解 Electron，先认识它两个"原材料"：</p>
+<ul>
+  <li><strong>Chromium</strong>：Google Chrome 浏览器的核心引擎——负责把 HTML 和 CSS 代码变成你看到的网页画面。开源，谁都能用。</li>
+  <li><strong>Node.js</strong>：让 <strong>JavaScript</strong>（网页用的编程语言）脱离浏览器直接在操作系统层面运行的程序。普通浏览器里的 JavaScript 不能读本地文件、不能启动其他程序（安全限制），Node.js 里的 JavaScript 可以——它能读写文件、启子进程、访问网络。</li>
+</ul>
+<p><strong>Electron = Chromium + Node.js 嵌在一起</strong>，打包成一个桌面可执行文件。界面用 HTML/CSS/JS 写（简单跨平台），系统操作（启动 ZLM、写文件）用 Node.js 做。两者通过 IPC（进程间通信——两个正在运行的程序之间互相传消息的机制）协作。</p>
+</div>
 
-  <div class="panel">
-    <h3>这个项目里的 UI 做了什么</h3>
-    <ul>
-      <li><strong>流管理面板</strong>：输入 Gateway 地址、app、stream、模式 → 创建流 → 显示返回的推流/播放地址 → 一键复制</li>
-      <li><strong>日志查看器</strong>：四个日志区域（Gateway 标准输出、Gateway 错误、ZLMediaKit、UI 错误），每 3 秒自动刷新</li>
-      <li><strong>按需启动</strong>：窗口打开时不自动启动 ZLMediaKit 和 Gateway。用户点击"创建并开始"按钮才启动——避免只是打开看看就占用了端口</li>
-      <li><strong>深浅色主题</strong>：右上角切换，偏好保存在 localStorage</li>
-    </ul>
-  </div>
+<div class="diagram-box">
+<svg viewBox="0 0 560 180" xmlns="http://www.w3.org/2000/svg" style="max-width:560px;">
+  <rect x="20" y="20" width="155" height="82" rx="8" fill="#edfce9" stroke="#b8d8b0" stroke-width="1.2"/>
+  <text x="97" y="48" text-anchor="middle" fill="#141413" font-size="13" font-weight="500">Chromium</text>
+  <text x="97" y="66" text-anchor="middle" fill="#6c6a64" font-size="10">渲染 HTML/CSS</text>
+  <text x="97" y="80" text-anchor="middle" fill="#6c6a64" font-size="10">执行 JavaScript</text>
+  <text x="97" y="94" text-anchor="middle" fill="#6c6a64" font-size="10">显示窗口界面</text>
 
-  <div class="panel">
-    <h3>两种运行模式</h3>
-    <ul>
-      <li><strong>托管模式</strong>（发布版）：Electron 的 <span class="inline-code">main.js</span>（主进程）直接启动和管理 ZLMediaKit + Gateway 作为子进程。包括端口探测、配置生成、健康检查、写入 runtime.json——整套启动逻辑在 JavaScript 里实现了一遍</li>
-      <li><strong>脚本模式</strong>（开发版）：依赖外部的 <span class="inline-code">scripts/start-all.ps1</span>（Windows）或 <span class="inline-code">start-all.sh</span>（Linux）来启动服务。Electron 本身只做界面展示</li>
-    </ul>
-    <p>打包时，通过 <span class="inline-code">electron-builder</span> 把 ZLMediaKit 二进制、Gateway 编译产物、启动脚本一并打包进 <span class="inline-code">extraResources</span>。最终输出的 .exe（Windows）或 AppImage（Linux）包含了运行需要的全部文件。</p>
-  </div>
+  <rect x="210" y="20" width="155" height="82" rx="8" fill="#f1f5ff" stroke="#b8c8e8" stroke-width="1.2"/>
+  <text x="287" y="48" text-anchor="middle" fill="#141413" font-size="13" font-weight="500">Node.js</text>
+  <text x="287" y="66" text-anchor="middle" fill="#6c6a64" font-size="10">读写本地文件</text>
+  <text x="287" y="80" text-anchor="middle" fill="#6c6a64" font-size="10">启动子进程</text>
+  <text x="287" y="94" text-anchor="middle" fill="#6c6a64" font-size="10">TCP 网络操作</text>
+
+  <rect x="400" y="20" width="140" height="82" rx="8" fill="#fff5f0" stroke="#e8c8b8" stroke-width="1.2"/>
+  <text x="470" y="55" text-anchor="middle" fill="#141413" font-size="13" font-weight="500">↕ IPC</text>
+  <text x="470" y="75" text-anchor="middle" fill="#6c6a64" font-size="10">进程间消息传递</text>
+
+  <rect x="100" y="130" width="360" height="38" rx="8" fill="#efe9de" stroke="#cc785c" stroke-width="1.5"/>
+  <text x="280" y="155" text-anchor="middle" fill="#141413" font-size="14" font-weight="500">Electron = Chromium + Node.js + IPC</text>
+</svg>
+<p class="diagram-caption">Electron 把浏览器引擎和系统运行时合并。界面用网页技术，系统操作用 Node.js，两者通过 IPC 对话。</p>
+</div>
+
+<div class="panel">
+<h3>UI 功能 / 两种模式</h3>
+<p>UI 提供流管理面板（填参数→创建→显示地址→复制）、日志查看器（每 3 秒刷新）、按需启动（开窗口不自动启动，点按钮才启动）、主题切换。</p>
+<ul>
+  <li><strong>托管模式</strong>（发布版）：Electron 自己启动和管理 ZLMediaKit + Gateway。整套启动逻辑用 JavaScript 在 main.js 里实现。</li>
+  <li><strong>脚本模式</strong>（开发版）：依赖外部 <span class="inline-code">start-all.ps1</span>（PowerShell）或 <span class="inline-code">start-all.sh</span>（Bash）脚本。</li>
+</ul>
+<p>打包时通过 <strong>electron-builder</strong>（把 Electron 项目打包成可分发程序的工具）把 ZLMediaKit 二进制、Gateway 编译产物、启动脚本全部打进去。最终输出：Windows 上一个 .exe（portable 模式，不需安装），Linux 上一个 AppImage（自包含应用格式）。</p>
+</div>
 </section>
 
-<!-- ═══════════════════════════════════════════════════════════════
-   07 — Kernel Console 启动器
-   ═══════════════════════════════════════════════════════════════ -->
+<!-- ════════════════ 07 ════════════════ -->
 <section class="func-section" id="s07">
-  <div class="section-number">07</div>
-  <h2 class="section-title">Kernel Console 启动器</h2>
+<div class="section-number">07</div><h2 class="section-title">Kernel Console 启动器</h2>
 
-  <div class="panel">
-    <h3>它是什么</h3>
-    <p>Kernel Console 是一个用 Go 编写的命令行程序，约 650 行，以 <span class="inline-code">FPlayerFFServiceKernel.exe</span>（Windows）或 <span class="inline-code">FPlayerFFServiceKernel</span>（Linux）作为独立可执行文件分发。</p>
-    <p>它的使用场景是<strong>不需要图形界面的环境</strong>——比如远程服务器、NAS、树莓派等。直接在终端里运行，启动后前台驻留，打印运行信息，按 Ctrl+C 停止。</p>
-  </div>
+<div class="panel">
+<h3>它是什么</h3>
+<p>Kernel Console 是一个 <strong>命令行程序</strong>——在终端（黑底白字或白底黑字的文字窗口）里运行，没有图形按钮，全通过文字输入输出交互。用 Go 编写约 650 行，编译为独立可执行文件。适用场景：远程 Linux 服务器（通过 SSH 远程连接过去只能看到终端）、NAS、树莓派等没有图形界面的环境。</p>
+</div>
 
-  <div class="panel">
-    <h3>它做了什么</h3>
-    <ol>
-      <li><strong>自动探测目录</strong>：从自身可执行文件的位置出发，向上查找服务根目录（通过检查 <span class="inline-code">3rd/zlm/</span>、<span class="inline-code">gateway/bin/</span>、<span class="inline-code">scripts/</span> 等标志性文件是否存在来判断）</li>
-      <li><strong>动态分配端口</strong>：为 ZLMediaKit 的 RTMP、HTTP、HTTPS、RTSP（仅 Linux）端分别探测空闲端口</li>
-      <li><strong>生成配置</strong>：读取 ZLMediaKit 的配置模板，替换端口号，写入运行时配置 <span class="inline-code">run/zlm.runtime.ini</span></li>
-      <li><strong>启动子进程</strong>：先启动 ZLMediaKit，通过 TCP 连接到 RTMP 端口验证其就绪；再启动 Gateway，轮询 /healthz 直到返回 200</li>
-      <li><strong>自动创建流</strong>：Gateway 启动后，调用 <span class="inline-code">POST /api/v1/streams/start</span> 创建一个默认流（app=live, stream=stream001, mode=httpflv）</li>
-      <li><strong>打印运行摘要</strong>：在终端输出所有关键信息——Gateway URL、健康检查地址、各协议推拉流地址——格式对齐，方便复制</li>
-      <li><strong>前台驻留与优雅停止</strong>：监听 SIGINT/SIGTERM 信号，收到后先发中断信号给子进程、等 1.5 秒、超时则强制终止</li>
-    </ol>
-  </div>
+<div class="diagram-box">
+<svg viewBox="0 0 780 200" xmlns="http://www.w3.org/2000/svg" style="max-width:780px;">
+  <rect x="15" y="15" width="140" height="48" rx="8" fill="#f5f0e8" stroke="#e6dfd8" stroke-width="0.8"/>
+  <text x="85" y="36" text-anchor="middle" fill="#6c6a64" font-size="11">① 自动探测目录</text>
+  <text x="85" y="50" text-anchor="middle" fill="#8e8b82" font-size="9">找 3rd/zlm/ 等标志</text>
+  <text x="185" y="42" fill="#8e8b82" font-size="14">→</text>
+  <rect x="210" y="15" width="130" height="48" rx="8" fill="#f5f0e8" stroke="#e6dfd8" stroke-width="0.8"/>
+  <text x="275" y="36" text-anchor="middle" fill="#6c6a64" font-size="11">② 动态分配端口</text>
+  <text x="275" y="50" text-anchor="middle" fill="#8e8b82" font-size="9">1935→8080→9000...</text>
+  <text x="370" y="42" fill="#8e8b82" font-size="14">→</text>
+  <rect x="395" y="15" width="120" height="48" rx="8" fill="#f5f0e8" stroke="#e6dfd8" stroke-width="0.8"/>
+  <text x="455" y="36" text-anchor="middle" fill="#6c6a64" font-size="11">③ 生成配置文件</text>
+  <text x="455" y="50" text-anchor="middle" fill="#8e8b82" font-size="9">写端口号到 ini</text>
+  <text x="545" y="42" fill="#8e8b82" font-size="14">→</text>
+  <rect x="570" y="15" width="130" height="48" rx="8" fill="#edfce9" stroke="#b8d8b0" stroke-width="0.8"/>
+  <text x="635" y="36" text-anchor="middle" fill="#6c6a64" font-size="11">④ 启动 ZLMediaKit</text>
+  <text x="635" y="50" text-anchor="middle" fill="#8e8b82" font-size="9">子进程 · 重定向日志</text>
+
+  <text x="170" y="100" fill="#8e8b82" font-size="14">→</text>
+  <rect x="15" y="90" width="130" height="48" rx="8" fill="#f1f5ff" stroke="#b8c8e8" stroke-width="0.8"/>
+  <text x="80" y="111" text-anchor="middle" fill="#6c6a64" font-size="11">⑤ 验证 ZLM 就绪</text>
+  <text x="80" y="125" text-anchor="middle" fill="#8e8b82" font-size="9">TCP 连 RTMP 端口</text>
+  <text x="185" y="117" fill="#8e8b82" font-size="14">→</text>
+  <rect x="205" y="90" width="135" height="48" rx="8" fill="#f1f5ff" stroke="#b8c8e8" stroke-width="0.8"/>
+  <text x="272" y="111" text-anchor="middle" fill="#6c6a64" font-size="11">⑥ 启动 Gateway</text>
+  <text x="272" y="125" text-anchor="middle" fill="#8e8b82" font-size="9">注入环境变量(端口)</text>
+  <text x="370" y="117" fill="#8e8b82" font-size="14">→</text>
+  <rect x="390" y="90" width="125" height="48" rx="8" fill="#f1f5ff" stroke="#b8c8e8" stroke-width="0.8"/>
+  <text x="452" y="111" text-anchor="middle" fill="#6c6a64" font-size="11">⑦ 健康检查轮询</text>
+  <text x="452" y="125" text-anchor="middle" fill="#8e8b82" font-size="9">/healthz · 5s超时·重试8次</text>
+  <text x="545" y="117" fill="#8e8b82" font-size="14">→</text>
+  <rect x="560" y="90" width="140" height="48" rx="8" fill="#fff8e6" stroke="#e8d8b0" stroke-width="0.8"/>
+  <text x="630" y="111" text-anchor="middle" fill="#6c6a64" font-size="11">⑧ 写入 runtime.json</text>
+  <text x="630" y="125" text-anchor="middle" fill="#8e8b82" font-size="9">+ 自动创建默认流</text>
+
+  <rect x="180" y="160" width="350" height="28" rx="14" fill="#cc785c" opacity="0.08"/>
+  <text x="355" y="179" text-anchor="middle" fill="#141413" font-size="11">⑨ 前台驻留 · 监听 Ctrl+C · 收到后优雅停止</text>
+</svg>
+<p class="diagram-caption">Kernel Console 启动的完整流程：从探测目录到前台驻留，共 9 步。</p>
+</div>
 </section>
 
-<!-- ═══════════════════════════════════════════════════════════════
-   08 — 服务启动与生命周期
-   ═══════════════════════════════════════════════════════════════ -->
+<!-- ════════════════ 08 ════════════════ -->
 <section class="func-section" id="s08">
-  <div class="section-number">08</div>
-  <h2 class="section-title">服务启动与生命周期</h2>
+<div class="section-number">08</div><h2 class="section-title">服务启动与生命周期</h2>
 
-  <div class="panel">
-    <h3>三条启动路径——同一件事，三种实现</h3>
-    <p>本项目有三套不同的启动逻辑，但最终目的完全一样：启动 ZLMediaKit + Gateway。为什么会有三套？</p>
-    <div class="card-grid" style="grid-template-columns: repeat(3, 1fr);">
-      <div class="card">
-        <span class="card-icon">📜</span>
-        <h4>PowerShell / Bash 脚本</h4>
-        <p><span class="inline-code">scripts/start-all.ps1</span> / <span class="inline-code">start-all.sh</span>。用于开发调试时一键启动。</p>
-        <span class="card-tag">开发环境</span>
-      </div>
-      <div class="card">
-        <span class="card-icon">🖥️</span>
-        <h4>Electron 主进程</h4>
-        <p><span class="inline-code">ui/main.js</span> 中用 JavaScript 实现了相同的逻辑。用于打包发布版（用户点按钮启动）。</p>
-        <span class="card-tag">发布版 UI</span>
-      </div>
-      <div class="card">
-        <span class="card-icon">⌨️</span>
-        <h4>Go Kernel Console</h4>
-        <p><span class="inline-code">kernel-console/main.go</span> 用 Go 实现。用于服务器/命令行环境。</p>
-        <span class="card-tag">服务器部署</span>
-      </div>
-    </div>
-    <p>三套实现的<strong>启动步骤完全一致</strong>，但代码各自独立编写（用不同语言），不互相调用。这样做是为了避免"跨语言依赖链"——如果脚本依赖 Go 程序、Electron 依赖脚本，任何一环改动都可能影响其他启动路径。各自独立实现，虽然代码有重复，但每条路径都完全自包含。</p>
-  </div>
+<div class="panel">
+<h3>三套启动方式——同一件事实现三遍</h3>
+<p>启动 ZLMediaKit + Gateway 这套流程在 PowerShell/Bash 脚本里实现了一遍，在 Electron 的 main.js 里又实现了一遍，在 Go Kernel Console 里又实现了一遍。<strong>三套代码做的事完全相同，但不共享任何代码</strong>。</p>
+<p>为什么？为了<strong>避免跨语言依赖链</strong>。如果只有一套启动逻辑写在 PowerShell 脚本里，那 Electron 和 Kernel Console 都得依赖这个脚本——脚本改了任何一个参数名，两头都可能莫名其妙挂掉。各自独立实现虽然代码有重复，但每条路径完全自包含。一条出问题不影响另两条。这是工程上的权衡。</p>
+<div class="card-grid" style="grid-template-columns: repeat(3, 1fr);">
+  <div class="card"><span class="card-icon">📜</span><h4>PowerShell/Bash 脚本</h4><p>双击 .bat 或执行脚本一键启动。开发调试用。</p><span class="card-tag">开发</span></div>
+  <div class="card"><span class="card-icon">🖥️</span><h4>Electron 主进程</h4><p>main.js 里用 JavaScript 实现相同逻辑。用户点按钮启动。</p><span class="card-tag">发布版</span></div>
+  <div class="card"><span class="card-icon">⌨️</span><h4>Go Kernel Console</h4><p>纯命令行。无图形界面的服务器环境用。</p><span class="card-tag">服务器</span></div>
+</div>
+</div>
 
-  <div class="panel">
-    <h3>启动需要哪几步</h3>
-    <ol>
-      <li><strong>端口探测</strong>：依次尝试默认端口（RTMP=1935, HTTP=8080, Gateway=9000 等），如果被占用就用操作系统随机分配的空闲端口</li>
-      <li><strong>配置生成</strong>：读取 ZLMediaKit 的模板配置文件，把端口号写进去，生成 <span class="inline-code">run/zlm.runtime.ini</span></li>
-      <li><strong>启动 ZLMediaKit</strong>：作为子进程启动，把标准输出和标准错误重定向到日志文件</li>
-      <li><strong>验证 ZLMediaKit</strong>：通过 TCP 连接探测 RTMP 端口，确认 ZLMediaKit 已就绪（Electron 模式超时 10 秒）</li>
-      <li><strong>启动 Gateway</strong>：作为子进程启动，注入环境变量（ZLM 端口号、Gateway 端口号等）</li>
-      <li><strong>健康检查轮询</strong>：每 200 毫秒请求一次 <span class="inline-code">/healthz</span>，最多等 5 秒。如果超时，换一个空闲端口重试，最多 8 次</li>
-      <li><strong>写入运行时信息</strong>：将 Gateway URL、各端口号、启动时间等写入 <span class="inline-code">run/runtime.json</span></li>
-    </ol>
-  </div>
+<div class="panel">
+<h3>启动七步 / 端口不够用 / 优雅停止</h3>
+<p><strong>启动</strong>：探测空闲端口 → 生成 ZLM 配置文件 → 启动 ZLM（子进程）→ TCP 验证 ZLM 就绪 → 启动 Gateway（子进程，注入环境变量）→ 每 0.2 秒轮询 /healthz（5 秒超时重试最多 8 次）→ 写入 runtime.json。</p>
+<p><strong>端口不够</strong>：一台电脑 65536 个端口，一个端口只能一个程序占。默认端口被占了就请操作系统随机给个空闲的。Gateway 更顽强——healthz 不成功就换端口重启，最多 8 次。</p>
 
-  <div class="panel">
-    <h3>端口动态分配</h3>
-    <p>一台电脑有 65536 个端口（0-65535）。每个网络程序监听其中若干端口。问题是：<strong>一个端口同一时刻只能被一个程序占用</strong>。如果默认端口被其他程序占了，服务就会启动失败。</p>
-    <p>解决方案——先试默认端口，被占就随机分：</p>
-    <div class="code-block"><span class="cmt">// kernel-console/main.go — 端口分配</span>
-<span class="kw">func</span> <span class="fn">getFreePort</span>(preferred <span class="type">int</span>) <span class="type">int</span> {
-    <span class="kw">if</span> preferred > <span class="num">0</span> {
-        <span class="kw">if</span> p := try(preferred); p > <span class="num">0</span> { <span class="kw">return</span> p }  <span class="cmt">// 先试默认值</span>
-    }
-    <span class="kw">return</span> try(<span class="num">0</span>)  <span class="cmt">// 被占了就让操作系统随机给一个</span>
-}</div>
-    <p>Gateway 更加顽强——启动后如果 /healthz 没有在 5 秒内返回成功，自动换端口重试，最多 8 次。</p>
-  </div>
+<div class="diagram-box">
+<svg viewBox="0 0 680 140" xmlns="http://www.w3.org/2000/svg" style="max-width:680px;">
+  <text x="340" y="16" text-anchor="middle" fill="#141413" font-size="13" font-weight="500">Gateway 端口分配与重试机制</text>
+  <rect x="10" y="30" width="140" height="42" rx="8" fill="#edfce9" stroke="#b8d8b0" stroke-width="1"/>
+  <text x="80" y="48" text-anchor="middle" fill="#141413" font-size="11" font-weight="500">尝试端口 9000</text>
+  <text x="80" y="62" text-anchor="middle" fill="#6c6a64" font-size="9">启动 Gateway</text>
+  <text x="170" y="54" fill="#c64545" font-size="13">→ /healthz 超时 ✗</text>
+  <rect x="310" y="30" width="140" height="42" rx="8" fill="#edfce9" stroke="#b8d8b0" stroke-width="1"/>
+  <text x="380" y="48" text-anchor="middle" fill="#141413" font-size="11" font-weight="500">换端口 62341</text>
+  <text x="380" y="62" text-anchor="middle" fill="#6c6a64" font-size="9">重新启动 Gateway</text>
+  <text x="470" y="54" fill="#c64545" font-size="13">→ /healthz 超时 ✗</text>
+  <rect x="200" y="88" width="140" height="42" rx="8" fill="#edfce9" stroke="#b8d8b0" stroke-width="1"/>
+  <text x="270" y="106" text-anchor="middle" fill="#141413" font-size="11" font-weight="500">再换端口 17029</text>
+  <text x="270" y="120" text-anchor="middle" fill="#6c6a64" font-size="9">重新启动 Gateway</text>
+  <text x="370" y="112" fill="#5db872" font-size="15">→ /healthz OK ✓</text>
+  <rect x="480" y="88" width="180" height="42" rx="8" fill="#edfce9" stroke="#5db8a6" stroke-width="1.5"/>
+  <text x="570" y="106" text-anchor="middle" fill="#141413" font-size="11" font-weight="500">运行在端口 17029</text>
+  <text x="570" y="120" text-anchor="middle" fill="#6c6a64" font-size="9">写入 runtime.json</text>
+  <text x="340" y="138" text-anchor="middle" fill="#8e8b82" font-size="10">最多重试 8 次 · 每次等待 /healthz 最多 5 秒 · 全部失败则启动报错</text>
+</svg>
+<p class="diagram-caption">端口被占用时 Gateway 自动换端口重试。不是只试一次——最多试 8 个不同的端口，任一次 /healthz 返回成功即停止重试。</p>
+</div>
 
-  <div class="panel">
-    <h3>优雅停止</h3>
-    <p>停止服务不能直接"杀进程"。正确的做法叫"优雅停止"（graceful shutdown）：</p>
-    <ol>
-      <li>先向子进程发送 <strong>SIGINT 信号</strong>（等同于在终端按 Ctrl+C）。这是通知："请你正常退出"</li>
-      <li>等待 <strong>1.5 秒</strong>，让子进程有机会清理资源、关闭网络连接、写入未完成的数据</li>
-      <li>如果 1.5 秒后还没退出，发送 <strong>SIGKILL 信号</strong>——操作系统直接终止进程，不给任何反应时间</li>
-    </ol>
-    <p>停止顺序：<strong>先停 Gateway，再停 ZLMediaKit</strong>。Gateway 依赖 ZLMediaKit（需要知道端口信息），但 ZLMediaKit 不依赖 Gateway。先关依赖方，后关被依赖方，逻辑上不出错。</p>
-  </div>
+<p><strong>优雅停止</strong>：先发 SIGINT 信号（操作系统标准通知"请退出"，等同于你在终端按 Ctrl+C）+ 给 1.5 秒窗口让程序清理收尾 + 超时还不退就 SIGKILL（操作系统强制终止）。顺序：先停 Gateway，再停 ZLM——因为 Gateway 依赖 ZLM 的端口信息，反过来没有。</p>
+</div>
 </section>
 
-<!-- ═══════════════════════════════════════════════════════════════
-   09 — 网络与地址编排
-   ═══════════════════════════════════════════════════════════════ -->
+<!-- ════════════════ 09 ════════════════ -->
 <section class="func-section" id="s09">
-  <div class="section-number">09</div>
-  <h2 class="section-title">网络与地址编排</h2>
+<div class="section-number">09</div><h2 class="section-title">网络与地址编排</h2>
 
-  <div class="panel">
-    <h3>为什么 IP 地址选择是个问题</h3>
-    <p>Gateway 需要把正确的 IP 地址写入播放 URL（比如 <span class="inline-code">rtmp://192.168.1.5:1935/live/stream001</span>）。但一台电脑可能同时有多个 IP 地址：</p>
-    <ul>
-      <li>有线网卡一个 IP（如 192.168.1.10）</li>
-      <li>无线网卡一个 IP（如 192.168.1.11）</li>
-      <li>VPN、Docker、虚拟机等虚拟网卡也会创建 IP</li>
-      <li>127.0.0.1（回环地址）——只能本机访问，局域网内其他设备用不了</li>
-    </ul>
-    <p>如果 Gateway 选了一个错误的 IP——比如选了 127.0.0.1——那么同一局域网内的手机就无法访问。所以需要一套策略来选对的 IP。</p>
-  </div>
+<div class="panel">
+<h3>IP 地址怎么选</h3>
+<p>Gateway 生成的播放地址里必须包含<strong>一个能被播放端访问到的 IP</strong>。但一台电脑可能有多个 IP——有线网卡一个、WiFi 一个、VPN 虚拟网卡一个、Docker 虚拟网卡一个、127.0.0.1 回环地址（只能本机访问）。选错了播放端就连不上。</p>
+<p>Gateway 的优先级：① 用户显式设置的公网地址 → ② 启动时探测到的第一个可达 IP → ③ 请求到达时的动态判断：路由优选（UDP 探测找到客户端可达的网卡）+ 同 /24 子网优先（IP 前三段相同优先选）+ 轮询 TCP 可达性（300ms 超时）→ ④ 从 HTTP 请求头推断 → ⑤ 回退到 127.0.0.1。</p>
+</div>
 
-  <div class="panel">
-    <h3>Gateway 的多级 IP 选择策略</h3>
-    <p>Gateway 按以下优先级选择发布地址：</p>
-    <ol>
-      <li><strong>公网配置覆盖</strong>：如果服务启动时设置了 <span class="inline-code">SERVICE_PUBLIC_HOST</span>，直接使用这个地址（适用于通过 FRP 等工具做了公网映射的场景）</li>
-      <li><strong>启动阶段选定</strong>：Gateway 启动时遍历所有可用 IP，做绑定可达性测试，选第一个能用的，记录在 <span class="inline-code">selectedPublishHost</span> 变量中</li>
-      <li><strong>请求阶段动态选择</strong>（Linux 下更精细）：
-        <ul>
-          <li>路由优选——通过 UDP 拨号探测从客户端过来的网络路径走的是哪个网卡，选那个网卡的 IP</li>
-          <li>同 /24 子网优先——如果客户端 IP 是 192.168.1.x，优先选同样是 192.168.1.y 的服务器 IP（IP 前三位相同意味着在同一个广播域内）</li>
-          <li>轮询可达性——逐个对候选 IP 做 TCP 连接测试（300 毫秒超时）</li>
-        </ul>
-      </li>
-      <li><strong>请求回退</strong>：取 HTTP 请求头中的 <span class="inline-code">X-Forwarded-Host</span> 或 <span class="inline-code">Host</span>；都没有就用 <span class="inline-code">localIPv4()</span>；再没有就用 127.0.0.1</li>
-    </ol>
-  </div>
+<div class="diagram-box">
+<svg viewBox="0 0 740 100" xmlns="http://www.w3.org/2000/svg" style="max-width:740px;">
+  <rect x="10" y="25" width="120" height="40" rx="8" fill="#edfce9" stroke="#b8d8b0" stroke-width="1"/>
+  <text x="70" y="41" text-anchor="middle" fill="#141413" font-size="11" font-weight="500">公网配置覆盖</text>
+  <text x="70" y="55" text-anchor="middle" fill="#6c6a64" font-size="9">SERVICE_PUBLIC_HOST</text>
+  <text x="150" y="48" fill="#8e8b82" font-size="14">→</text>
+  <rect x="175" y="25" width="120" height="40" rx="8" fill="#f1f5ff" stroke="#b8c8e8" stroke-width="1"/>
+  <text x="235" y="41" text-anchor="middle" fill="#141413" font-size="11" font-weight="500">启动阶段探测</text>
+  <text x="235" y="55" text-anchor="middle" fill="#6c6a64" font-size="9">绑定可达性测试</text>
+  <text x="315" y="48" fill="#8e8b82" font-size="14">→</text>
+  <rect x="340" y="25" width="120" height="40" rx="8" fill="#fff8e6" stroke="#e8d8b0" stroke-width="1"/>
+  <text x="400" y="41" text-anchor="middle" fill="#141413" font-size="11" font-weight="500">请求时动态选择</text>
+  <text x="400" y="55" text-anchor="middle" fill="#6c6a64" font-size="9">路由优选·同子网·轮询</text>
+  <text x="480" y="48" fill="#8e8b82" font-size="14">→</text>
+  <rect x="505" y="25" width="100" height="40" rx="8" fill="#f5f0e8" stroke="#e6dfd8" stroke-width="1"/>
+  <text x="555" y="41" text-anchor="middle" fill="#141413" font-size="11" font-weight="500">请求头回退</text>
+  <text x="555" y="55" text-anchor="middle" fill="#6c6a64" font-size="9">Host / X-Forwarded</text>
+  <text x="625" y="48" fill="#8e8b82" font-size="14">→</text>
+  <rect x="650" y="25" width="80" height="40" rx="8" fill="#fff5f0" stroke="#e8c8b8" stroke-width="1"/>
+  <text x="690" y="48" text-anchor="middle" fill="#141413" font-size="11" font-weight="500">127.0.0.1</text>
+</svg>
+<p class="diagram-caption">IP 选择的多级回退链。每一步失败才进入下一步。目标是找到播放端真正能访问到的那个 IP。</p>
+</div>
 
-  <div class="panel">
-    <h3>CORS 中间件</h3>
-    <p>Gateway 有一个 <span class="inline-code">corsMiddleware</span> 函数。要理解它为什么存在，需要先理解<strong>浏览器的同源策略</strong>（Same-Origin Policy）。</p>
-    <p>同源策略是浏览器的一个安全机制：A 网站（<span class="inline-code">http://example.com</span>）上的 JavaScript 默认<strong>不能</strong>向 B 网站（<span class="inline-code">http://api.example.com</span>）发送 HTTP 请求——即使 B 网站的拥有者是你自己。浏览器会拦截这个请求。这是为了防止恶意网站冒用你的登录信息去访问其他网站。</p>
-    <p>但实际开发中，前后端分离很常见——网页界面在一个域名，API 在另一个域名。这时就需要 CORS（Cross-Origin Resource Sharing，跨域资源共享）：服务端在 HTTP 响应头里加上标记，告诉浏览器"我允许跨域访问"。</p>
-    <p>Gateway 的 CORS 设置：</p>
-    <ul>
-      <li><span class="inline-code">Access-Control-Allow-Origin: *</span> —— 允许任意来源的请求</li>
-      <li><span class="inline-code">Access-Control-Allow-Headers: Content-Type</span> —— 允许请求方声明内容格式</li>
-      <li><span class="inline-code">Access-Control-Allow-Methods: GET,POST,OPTIONS</span> —— 允许的方法</li>
-      <li>对 OPTIONS 预检请求直接返回 204，不做实际处理</li>
-    </ul>
-    <p>设置为 <span class="inline-code">*</span>（任意来源）是最宽松的配置。在当前版本中没有鉴权机制，所有接口都是公开的，所以这样配置是合适的——反正没有敏感数据需要保护。</p>
-  </div>
+<div class="panel">
+<h3>CORS——为什么需要它</h3>
+<p>Gateway 里有个 <span class="inline-code">corsMiddleware</span>。要理解它，先理解<strong>浏览器的同源策略</strong>：浏览器默认禁止 A 网站的 JavaScript 向 B 网站发 HTTP 请求。"源"= 协议 + 域名 + 端口号，三者有一个不同就算不同源。这个限制是为了安全——防止恶意网站冒充你的身份去访问你的银行。</p>
+<p>但前后端分离（界面在一个域名，API 在另一个域名）是合法需求——两套服务都是同一家公司部署的，只是域名不同。CORS（跨域资源共享）就是解决这个的：服务器在 HTTP 响应头里加标记，告诉浏览器"这个跨域请求我允许"。</p>
+<p>Gateway 设为允许<strong>任意来源</strong>（<span class="inline-code">Access-Control-Allow-Origin: *</span>）——因为当前版本没有任何身份认证，API 本来就是公开的，不存在"谁的请求应该被拒绝"。</p>
+</div>
 </section>
 
-<!-- ═══════════════════════════════════════════════════════════════
-   10 — 三端协同
-   ═══════════════════════════════════════════════════════════════ -->
+<!-- ════════════════ 10 ════════════════ -->
 <section class="func-section" id="s10">
-  <div class="section-number">10</div>
-  <h2 class="section-title">三端协同</h2>
-
-  <div class="panel">
-    <p>FPlayer FF Service 不是孤立存在的。它和另外两个项目共同组成一个完整系统：</p>
-    <div class="diagram-box">
-      <svg viewBox="0 0 780 200" xmlns="http://www.w3.org/2000/svg" style="max-width:780px;">
-        <defs>
-          <marker id="mb1" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto"><path d="M0,0 L7,2.5 L0,5 Z" fill="#1863dc"/></marker>
-          <marker id="mb2" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto"><path d="M0,0 L7,2.5 L0,5 Z" fill="#e07b30"/></marker>
-        </defs>
-        <rect x="10" y="55" width="210" height="80" rx="6" fill="var(--color-pale-blue)" stroke="var(--color-action-blue)" stroke-width="1"/>
-        <text x="115" y="85" text-anchor="middle" fill="var(--color-black)" font-size="14" font-weight="500">fplayer-ff-desktop</text>
-        <text x="115" y="105" text-anchor="middle" fill="var(--color-slate)" font-size="11">采集 + 推流 + 拉流</text>
-        <text x="115" y="120" text-anchor="middle" fill="var(--color-slate)" font-size="11">（桌面客户端）</text>
-
-        <rect x="285" y="55" width="210" height="80" rx="6" fill="var(--color-pale-green)" stroke="#2d8a56" stroke-width="1"/>
-        <text x="390" y="85" text-anchor="middle" fill="var(--color-black)" font-size="14" font-weight="500">fplayer-ff-service</text>
-        <text x="390" y="105" text-anchor="middle" fill="var(--color-slate)" font-size="11">协议转换 + 地址编排</text>
-        <text x="390" y="120" text-anchor="middle" fill="var(--color-slate)" font-size="11">（本服务）</text>
-
-        <rect x="560" y="55" width="210" height="80" rx="6" fill="#fff8e6" stroke="#e07b30" stroke-width="1"/>
-        <text x="665" y="85" text-anchor="middle" fill="var(--color-black)" font-size="14" font-weight="500">fplayer-ff-mobile</text>
-        <text x="665" y="105" text-anchor="middle" fill="var(--color-slate)" font-size="11">查询地址 + 拉流播放</text>
-        <text x="665" y="120" text-anchor="middle" fill="var(--color-slate)" font-size="11">（手机客户端）</text>
-
-        <line x1="220" y1="95" x2="280" y2="95" stroke="#1863dc" stroke-width="1.5" marker-end="url(#mb1)"/>
-        <text x="250" y="87" text-anchor="middle" fill="#1863dc" font-size="9">① 创建流 + 推流</text>
-        <line x1="495" y1="95" x2="555" y2="95" stroke="#e07b30" stroke-width="1.5" marker-end="url(#mb2)"/>
-        <text x="525" y="87" text-anchor="middle" fill="#e07b30" font-size="9">② 查地址 + 拉流</text>
-
-        <text x="390" y="175" text-anchor="middle" fill="var(--color-slate)" font-size="12">同一局域网下，Desktop 推 → Service 转 → Mobile/Desktop 播</text>
-      </svg>
-    </div>
-
-    <p>三个项目的协作模式：</p>
-    <ol>
-      <li><strong>Desktop</strong> 把采集到的视频画面通过 RTMP 推送到 Service 的 ZLMediaKit</li>
-      <li><strong>Service</strong> 的 ZLMediaKit 自动转封装为 HTTP-FLV 和 HLS；Gateway 维护流会话并生成播放地址</li>
-      <li><strong>Mobile</strong>（或其他 Desktop）通过 Gateway 的 resolve 接口，用 app + stream 名称查到播放地址，直接拉流播放</li>
-    </ol>
-    <p>注意：Mobile 不需要知道流 ID，不需要知道端口号，不需要知道协议细节。它只需要知道<strong>应用名（app）和流名（stream）</strong>。所有复杂的地址拼接都在 Gateway 端完成。这就是"地址编排"的价值所在。</p>
-  </div>
+<div class="section-number">10</div><h2 class="section-title">三端协同</h2>
+<div class="panel">
+<div class="diagram-box" style="margin-top:0;">
+<svg viewBox="0 0 780 200" xmlns="http://www.w3.org/2000/svg" style="max-width:780px;">
+  <defs>
+    <marker id="d10a" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto"><path d="M0,0 L7,2.5 L0,5 Z" fill="#cc785c"/></marker>
+    <marker id="d10b" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto"><path d="M0,0 L7,2.5 L0,5 Z" fill="#e8a55a"/></marker>
+  </defs>
+  <rect x="10" y="50" width="210" height="80" rx="8" fill="#f1f5ff" stroke="#b8c8e8" stroke-width="1"/>
+  <text x="115" y="80" text-anchor="middle" fill="#141413" font-size="14" font-weight="500">fplayer-ff-desktop</text>
+  <text x="115" y="100" text-anchor="middle" fill="#6c6a64" font-size="11">采集画面 · 推流 · 拉流</text>
+  <line x1="220" y1="90" x2="280" y2="90" stroke="#cc785c" stroke-width="2" marker-end="url(#d10a)"/>
+  <text x="250" y="83" text-anchor="middle" fill="#cc785c" font-size="9">① 创建流 + RTMP 推流</text>
+  <rect x="285" y="50" width="210" height="80" rx="8" fill="#efe9de" stroke="#cc785c" stroke-width="1"/>
+  <text x="390" y="80" text-anchor="middle" fill="#141413" font-size="14" font-weight="500">fplayer-ff-service</text>
+  <text x="390" y="100" text-anchor="middle" fill="#6c6a64" font-size="11">收流转发 · 地址编排</text>
+  <line x1="495" y1="90" x2="555" y2="90" stroke="#e8a55a" stroke-width="2" marker-end="url(#d10b)"/>
+  <text x="525" y="83" text-anchor="middle" fill="#e8a55a" font-size="9">② 查地址 + 拉流</text>
+  <rect x="560" y="50" width="210" height="80" rx="8" fill="#fff8e6" stroke="#e8d8b0" stroke-width="1"/>
+  <text x="665" y="80" text-anchor="middle" fill="#141413" font-size="14" font-weight="500">fplayer-ff-mobile</text>
+  <text x="665" y="100" text-anchor="middle" fill="#6c6a64" font-size="11">查地址 · 拉流播放</text>
+  <text x="390" y="170" text-anchor="middle" fill="#6c6a64" font-size="12">同一局域网：Desktop 推 → Service 转 → Mobile 播</text>
+</svg>
+</div>
+<ol>
+  <li><strong>Desktop</strong> 采集 → 调 Gateway 创建流 → 拿到 RTMP 推流地址 → 把视频推到 ZLMediaKit</li>
+  <li><strong>Service</strong> ZLMediaKit 自动转封装出 HTTP-FLV 和 HLS；Gateway 维护会话和地址</li>
+  <li><strong>Mobile</strong>（或另一个 Desktop）调 Gateway resolve 接口（只传 app+stream）→ 拿到播放地址 → 连 ZLMediaKit 拉流</li>
+</ol>
+<p>Mobile 不需要知道流 ID、端口号、协议细节——它只需要 app + stream 两个名称。所有复杂逻辑在 Service 端完成。这就是"地址编排"的价值。</p>
+</div>
 </section>
 
-<!-- ═══════════════════════════════════════════════════════════════
-   11 — 构建与分发
-   ═══════════════════════════════════════════════════════════════ -->
+<!-- ════════════════ 11 ════════════════ -->
 <section class="func-section" id="s11">
-  <div class="section-number">11</div>
-  <h2 class="section-title">构建与分发</h2>
-
-  <div class="panel">
-    <h3>Go 程序的编译</h3>
-    <p>Go 语言的一个重要特性：<strong>编译为独立二进制文件</strong>。编译产物是一个可执行文件，包含了 Go 运行时和所有依赖，<strong>不需要在目标机器上安装 Go</strong>。</p>
-    <p>编译命令：</p>
-    <div class="code-block"><span class="cmt"># Windows</span>
-go build -o gateway/bin/gateway.exe gateway/
-go build -o kernel-console/bin/FPlayerFFServiceKernel.exe kernel-console/
-
-<span class="cmt"># Linux</span>
-go build -o gateway/bin/gateway gateway/
-go build -o kernel-console/bin/FPlayerFFServiceKernel kernel-console/</div>
-  </div>
-
-  <div class="panel">
-    <h3>Electron 打包</h3>
-    <p>Electron 应用通过 <span class="inline-code">electron-builder</span> 打包。它会：</p>
-    <ol>
-      <li>把 HTML/CSS/JS 界面资源打包</li>
-      <li>嵌入 Chromium 引擎和 Node.js 运行时</li>
-      <li>通过 <span class="inline-code">extraResources</span> 配置把外部文件（ZLMediaKit 二进制、Gateway 编译产物、启动脚本）一并打进包</li>
-      <li>Windows 上输出独立的 .exe 可执行文件（portable 模式，无需安装）</li>
-      <li>Linux 上输出 AppImage 格式</li>
-    </ol>
-  </div>
-
-  <div class="panel">
-    <h3>最终产物的拆分</h3>
-    <p>构建脚本最终生成两个独立分发包：</p>
-    <ul>
-      <li><strong>portable-ui</strong>：含 Electron 图形界面 + ZLMediaKit + Gateway + 脚本。面向需要可视化管理的用户</li>
-      <li><strong>portable-kernel</strong>：含 Kernel Console + ZLMediaKit + Gateway + 脚本。面向命令行/服务器部署场景</li>
-    </ul>
-    <p>两个包共用底层的 ZLMediaKit 和 Gateway 二进制文件，只是上层入口不同。各自的构建脚本还会做<strong>完整性校验</strong>——检查所有必需文件是否存在，避免打包遗漏。</p>
-  </div>
-
-  <div class="panel">
-    <h3>跨平台适配</h3>
-    <p>Kernel Console 启动时会自动检测操作系统（<span class="inline-code">runtime.GOOS</span>），然后选择正确的可执行文件名（Windows 加 .exe 后缀）、正确的 ZLMediaKit 目录（Windows 用 <span class="inline-code">3rd/zlm/windows/</span>，Linux 兼容 <span class="inline-code">linux</span> 和 <span class="inline-code">Linux</span> 两种大小写）、以及适当的端口策略（Linux 额外开启 RTSP 端口，默认 8554 以避免需要 root 权限绑定 554）。</p>
-  </div>
+<div class="section-number">11</div><h2 class="section-title">构建与分发</h2>
+<div class="panel">
+<h3>Go 编译 / Electron 打包 / 跨平台</h3>
+<p><strong>Go 程序编译</strong>：Go 源代码 → Go 编译器 → 独立二进制可执行文件。包含 Go 运行时和所有依赖，拷贝到同架构机器就能跑。</p>
+<div class="diagram-box">
+<svg viewBox="0 0 680 100" xmlns="http://www.w3.org/2000/svg" style="max-width:680px;">
+  <text x="340" y="16" text-anchor="middle" fill="#141413" font-size="13" font-weight="500">从源代码到可执行文件（以 Gateway 为例）</text>
+  <rect x="15" y="35" width="150" height="45" rx="8" fill="#f1f5ff" stroke="#b8c8e8" stroke-width="1"/>
+  <text x="90" y="55" text-anchor="middle" fill="#141413" font-size="12" font-weight="500">📄 main.go</text>
+  <text x="90" y="70" text-anchor="middle" fill="#6c6a64" font-size="10">860 行 Go 源代码</text>
+  <text x="185" y="62" fill="#8e8b82" font-size="16">→</text>
+  <rect x="210" y="35" width="130" height="45" rx="8" fill="#fff5f0" stroke="#e8c8b8" stroke-width="1"/>
+  <text x="275" y="55" text-anchor="middle" fill="#141413" font-size="12" font-weight="500">🔧 Go 编译器</text>
+  <text x="275" y="70" text-anchor="middle" fill="#6c6a64" font-size="10">翻译 + 打包运行时</text>
+  <text x="360" y="62" fill="#8e8b82" font-size="16">→</text>
+  <rect x="390" y="35" width="150" height="45" rx="8" fill="#edfce9" stroke="#5db8a6" stroke-width="1.2"/>
+  <text x="465" y="55" text-anchor="middle" fill="#141413" font-size="12" font-weight="500">gateway.exe</text>
+  <text x="465" y="70" text-anchor="middle" fill="#6c6a64" font-size="10">独立可执行文件</text>
+  <text x="555" y="62" fill="#8e8b82" font-size="16">→</text>
+  <rect x="575" y="35" width="90" height="45" rx="8" fill="#f5f0e8" stroke="#e6dfd8" stroke-width="1"/>
+  <text x="620" y="55" text-anchor="middle" fill="#141413" font-size="12" font-weight="500">运行!</text>
+  <text x="620" y="70" text-anchor="middle" fill="#6c6a64" font-size="10">(无需装 Go)</text>
+</svg>
+<p class="diagram-caption">编译就是把人类可读的代码变成电脑能直接执行的机器指令。Go 的编译产物自带运行时，不需要在目标机器上装 Go。</p>
+</div>
+<p>命令：<span class="inline-code">go build -o gateway/bin/gateway.exe gateway/</span>。</p>
+<p><strong>Electron 打包</strong>：electron-builder 把 HTML/CSS/JS + Chromium + Node.js + extraResources（ZLMediaKit 二进制、Gateway 编译产物、启动脚本）全部塞进一个 .exe（Windows portable）或 AppImage（Linux）。</p>
+<p><strong>最终两个分发包</strong>：portable-ui（图形界面版）和 portable-kernel（命令行版）——底层 ZLMediaKit 和 Gateway 完全一样，只差上层入口。构建脚本做完整性校验防漏文件。</p>
+<p><strong>跨平台</strong>：Kernel Console 通过 <span class="inline-code">runtime.GOOS</span>（Go 提供的常量，告诉你当前在哪个操作系统）判断平台，选正确的文件名后缀、ZLM 目录、端口策略。Linux 下额外开启 RTSP 端口（默认用 8554 避免需要 root 权限绑定标准端口 554）。</p>
+</div>
 </section>
 
-<!-- ═══════════════════════════════════════════════════════════════
-   12 — 设计决策
-   ═══════════════════════════════════════════════════════════════ -->
+<!-- ════════════════ 12 ════════════════ -->
 <section class="func-section" id="s12">
-  <div class="section-number">12</div>
-  <h2 class="section-title">设计决策</h2>
+<div class="section-number">12</div><h2 class="section-title">设计决策</h2>
 
-  <div class="dark-band">
-    <h3>不做持久化数据库</h3>
-    <p>Gateway 的流信息全部存在进程内存里，重启丢失。这是有意的设计取舍：</p>
-    <ul>
-      <li>视频流本身就是临时的——直播结束就没了。存储历史记录的意义有限</li>
-      <li>消除数据库依赖——不需要安装 MySQL/Redis，不需要维护表结构。Gateway 就是个可执行文件，拷贝即部署</li>
-      <li>如果未来需要历史记录，可以在 Gateway <strong>上层</strong>再做一层服务——调用 Gateway API 获取流信息后存到自己的数据库里。Gateway 本身保持简单</li>
-    </ul>
-  </div>
+<div class="warm-band">
+<h3>不做持久化数据库</h3>
+<p>Gateway 的流数据全在进程内存里，重启就没了。这不是能力不够，是有意为之：流本就是临时的（直播结束就没用了）、消除数据库依赖（不需要装 MySQL/Redis，Gateway 一个文件拷贝即部署）、如需历史记录可在 Gateway 外层再包一个服务（调 API 拿到数据后存自己的数据库）。</p>
+</div>
 
-  <div class="dark-band">
-    <h3>不做强鉴权</h3>
-    <p>当前版本的 API 没有任何身份验证机制——谁都可以调 <span class="inline-code">POST /api/v1/streams/start</span> 创建流。原因：</p>
-    <ul>
-      <li>当前使用场景是<strong>同一局域网内的可信环境</strong>——所有设备都在同一个内网，没有外部攻击面</li>
-      <li>如果需要公网部署，可以通过网络层的防火墙/VPN 解决安全问题</li>
-      <li>未来可以加 publisher token（推流令牌）+ viewer token（观看令牌），但当前不是必需的</li>
-    </ul>
-  </div>
+<div class="warm-band">
+<h3>不做身份认证</h3>
+<p>当前任何人知道 Gateway 地址都能调 API。原因：使用场景是同一局域网内可信环境（网络边界就是防线）、公网部署可在网络层用防火墙/VPN 解决。未来可加推流令牌+观看令牌，但当前不是必需的。</p>
+</div>
 
-  <div class="dark-band">
-    <h3>不做转码</h3>
-    <p>ZLMediaKit 只做<strong>协议转换（转封装）</strong>，不做<strong>编码转换（转码）</strong>。区别：</p>
-    <ul>
-      <li>转封装：H.264 数据用 RTMP 收 → 用 HLS 发。编码不变，只换包装</li>
-      <li>转码：H.265 数据 → 解码 → 重新编码为 H.264。需要大量 CPU</li>
-    </ul>
-    <p>不做转码意味着推流端用什么编码，播放端就得支持什么编码。这简化了服务端的计算负担——所有计算压力在推流端和播放端，服务端只是个高效的中转站。</p>
-  </div>
+<div class="warm-band">
+<h3>不做转码</h3>
+<p>ZLMediaKit 只换包装不换压缩方式。转码（解码再重新编码）需要的计算量是转封装的几十上百倍。不做转码意味着推流端用什么编码播放端就得支持什么编码——但服务端 CPU 负载极低。</p>
+</div>
 
-  <div class="dark-band">
-    <h3>Gateway 为什么只有一个文件</h3>
-    <p>860 行 Go 代码，全在 <span class="inline-code">main.go</span> 里，没有拆成多个包。这不是偷懒——Go 社区有很多成功的单文件 HTTP 服务案例。当程序的功能范围明确、代码量不大时，拆成多个文件反而增加了阅读和跳转的成本。一个文件，从上往下读，逻辑自然展开。</p>
-    <p>零第三方依赖也是同理——Go 标准库已经提供了 net/http（HTTP 服务）、encoding/json（JSON 编解码）、sync（并发控制）、crypto/rand（随机数），这些足够完成 Gateway 需要的所有功能。不引入框架，就没有框架升级带来的兼容性问题。</p>
-  </div>
+<div class="warm-band">
+<h3>Gateway 为什么是单文件 + 零依赖</h3>
+<p>860 行 Go 全在一个 main.go 里。功能范围明确（创建/查询/停止 + 健康检查），拆文件反而增加跳转成本。不用第三方框架（Gin、Echo 等流行 Go HTTP 框架）意味着没有框架升级引发的兼容问题——Go 标准库的 net/http 十年后还能编译。</p>
+</div>
 </section>
 
-<!-- ═══════════════════════════════════════════════════════════════
-   13 — 延伸阅读
-   ═══════════════════════════════════════════════════════════════ -->
+<!-- ════════════════ 13 ════════════════ -->
 <section class="func-section" id="s13">
-  <div class="section-number">13</div>
-  <h2 class="section-title">延伸阅读</h2>
-
-  <div style="display:grid; gap:var(--space-sm);">
-    <a class="link-card" href="https://github.com/ZLMediaKit/ZLMediaKit" target="_blank" rel="noopener">
-      <span class="link-icon">📡</span>
-      <div class="link-info"><h5>ZLMediaKit 开源仓库</h5><span>高性能 C++ 流媒体服务器，支持 RTSP/RTMP/HLS/HTTP-FLV/WebRTC 等全协议</span></div>
-    </a>
-    <a class="link-card" href="https://github.com/ZLMediaKit/ZLMediaKit/wiki" target="_blank" rel="noopener">
-      <span class="link-icon">📚</span>
-      <div class="link-info"><h5>ZLMediaKit Wiki（中文）</h5><span>流媒体协议、配置参数、性能优化的详细中文文档</span></div>
-    </a>
-    <a class="link-card" href="https://go.dev/doc/" target="_blank" rel="noopener">
-      <span class="link-icon">🔵</span>
-      <div class="link-info"><h5>Go 语言官方文档</h5><span>Gateway 和 Kernel Console 使用的编程语言。标准库覆盖 HTTP 服务、并发、加密等</span></div>
-    </a>
-    <a class="link-card" href="https://pkg.go.dev/net/http" target="_blank" rel="noopener">
-      <span class="link-icon">📦</span>
-      <div class="link-info"><h5>Go net/http 标准库</h5><span>Gateway 使用的 HTTP 服务框架，全部在 Go 标准库中，无需第三方依赖</span></div>
-    </a>
-    <a class="link-card" href="https://www.electronjs.org/docs" target="_blank" rel="noopener">
-      <span class="link-icon">⚛️</span>
-      <div class="link-info"><h5>Electron 官方文档</h5><span>用 Web 技术构建跨平台桌面应用的开源框架</span></div>
-    </a>
-    <a class="link-card" href="https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS" target="_blank" rel="noopener">
-      <span class="link-icon">🌐</span>
-      <div class="link-info"><h5>MDN: CORS 详解</h5><span>浏览器同源策略与跨域资源共享的权威文档</span></div>
-    </a>
-    <a class="link-card" href="https://en.wikipedia.org/wiki/Real-Time_Messaging_Protocol" target="_blank" rel="noopener">
-      <span class="link-icon">🎬</span>
-      <div class="link-info"><h5>Wikipedia: RTMP</h5><span>RTMP 协议的历史背景与技术细节</span></div>
-    </a>
-    <a class="link-card" href="https://developer.apple.com/documentation/http-live-streaming" target="_blank" rel="noopener">
-      <span class="link-icon">🍎</span>
-      <div class="link-info"><h5>Apple: HLS 官方文档</h5><span>HLS 协议的标准规范，苹果公司维护</span></div>
-    </a>
-  </div>
+<div class="section-number">13</div><h2 class="section-title">延伸阅读</h2>
+<div style="display:grid; gap:var(--space-xs);">
+  <a class="link-card" href="https://github.com/ZLMediaKit/ZLMediaKit" target="_blank" rel="noopener"><span class="link-icon">📡</span><div class="link-info"><h5>ZLMediaKit 开源仓库</h5><span>C++ 高性能流媒体服务器，支持全协议</span></div></a>
+  <a class="link-card" href="https://github.com/ZLMediaKit/ZLMediaKit/wiki" target="_blank" rel="noopener"><span class="link-icon">📚</span><div class="link-info"><h5>ZLMediaKit Wiki（中文）</h5><span>流媒体协议、配置参数、性能优化的详细文档</span></div></a>
+  <a class="link-card" href="https://go.dev/doc/" target="_blank" rel="noopener"><span class="link-icon">🔵</span><div class="link-info"><h5>Go 语言官方文档</h5><span>标准库覆盖 HTTP 服务、并发、加密等</span></div></a>
+  <a class="link-card" href="https://pkg.go.dev/net/http" target="_blank" rel="noopener"><span class="link-icon">📦</span><div class="link-info"><h5>Go net/http</h5><span>Gateway 使用的 HTTP 服务能力</span></div></a>
+  <a class="link-card" href="https://www.electronjs.org/docs" target="_blank" rel="noopener"><span class="link-icon">⚛️</span><div class="link-info"><h5>Electron 官方文档</h5><span>用 Web 技术构建桌面应用的框架</span></div></a>
+  <a class="link-card" href="https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS" target="_blank" rel="noopener"><span class="link-icon">🌐</span><div class="link-info"><h5>MDN: CORS</h5><span>浏览器同源策略与跨域资源共享</span></div></a>
+  <a class="link-card" href="https://en.wikipedia.org/wiki/Real-Time_Messaging_Protocol" target="_blank" rel="noopener"><span class="link-icon">🎬</span><div class="link-info"><h5>Wikipedia: RTMP</h5><span>RTMP 协议的技术细节与历史</span></div></a>
+  <a class="link-card" href="https://developer.apple.com/documentation/http-live-streaming" target="_blank" rel="noopener"><span class="link-icon">🍎</span><div class="link-info"><h5>Apple: HLS</h5><span>HLS 协议的标准规范</span></div></a>
+</div>
 </section>
 
-</main><!-- /.content-area -->
-</div><!-- /.page-layout -->
+</main>
+</div>
 
 <footer class="site-footer">
   <p>FPlayer FF Service 技术全景教程 · 基于项目源码分析生成 · 2026</p>
-  <p style="margin-top:4px;">每个概念都从它依赖的前置知识开始讲起</p>
+  <p style="margin-top:4px;">每个你不认识的名词，这里都从零开始讲</p>
 </footer>
 
 <script>
-/* ═══════════════════════════════════════════════════════════════
-   Theme
-   ═══════════════════════════════════════════════════════════════ */
 (function() {
   var html = document.documentElement;
   var saved = localStorage.getItem('fplayer-tutorial-theme');
-  if (saved === 'dark') { html.setAttribute('data-theme', 'dark'); }
-  else if (!saved && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-    html.setAttribute('data-theme', 'dark');
-  }
+  if (saved === 'dark') html.setAttribute('data-theme', 'dark');
+  else if (!saved && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) html.setAttribute('data-theme', 'dark');
   document.getElementById('themeToggle').addEventListener('click', function() {
     var next = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
-    html.setAttribute('data-theme', next);
-    localStorage.setItem('fplayer-tutorial-theme', next);
+    html.setAttribute('data-theme', next); localStorage.setItem('fplayer-tutorial-theme', next);
   });
 })();
-
-/* ═══════════════════════════════════════════════════════════════
-   Sidebar — active state on scroll
-   ═══════════════════════════════════════════════════════════════ */
 (function() {
-  var links = document.querySelectorAll('.sidebar a');
-  var sections = [];
+  var links = document.querySelectorAll('.sidebar a'), sections = [];
   links.forEach(function(a) {
-    var id = a.getAttribute('href').substring(1);
-    var el = document.getElementById(id);
-    if (el) sections.push({ id: id, el: el, link: a });
+    var el = document.getElementById(a.getAttribute('href').substring(1));
+    if (el) sections.push({ el: el, link: a });
   });
-
-  function update() {
-    var y = window.scrollY + 120;
-    var active = null;
-    sections.forEach(function(s) {
-      if (s.el.offsetTop <= y) active = s;
-    });
+  window.addEventListener('scroll', function() {
+    var y = window.scrollY + 140, active = null;
+    sections.forEach(function(s) { if (s.el.offsetTop <= y) active = s; });
     links.forEach(function(a) { a.classList.remove('active'); });
     if (active) active.link.classList.add('active');
-  }
-  window.addEventListener('scroll', update);
-
-  // Smooth scroll on sidebar click
+  });
   links.forEach(function(a) {
     a.addEventListener('click', function(e) {
       e.preventDefault();
-      var id = this.getAttribute('href').substring(1);
-      var el = document.getElementById(id);
+      var el = document.getElementById(this.getAttribute('href').substring(1));
       if (el) el.scrollIntoView({ behavior: 'smooth' });
     });
   });
 })();
-
-/* ═══════════════════════════════════════════════════════════════
-   Back to Top + Progress Bar
-   ═══════════════════════════════════════════════════════════════ */
 (function() {
-  var backTop = document.getElementById('backTop');
-  var bar = document.getElementById('progressBar');
+  var backTop = document.getElementById('backTop'), bar = document.getElementById('progressBar');
   window.addEventListener('scroll', function() {
     var y = window.scrollY || document.documentElement.scrollTop;
-    if (y > 500) { backTop.classList.add('visible'); }
-    else { backTop.classList.remove('visible'); }
+    backTop.classList.toggle('visible', y > 500);
     var docH = document.documentElement.scrollHeight - window.innerHeight;
     bar.style.width = docH > 0 ? Math.min((y / docH) * 100, 100) + '%' : '0%';
   });
   backTop.addEventListener('click', function() { window.scrollTo({ top: 0, behavior: 'smooth' }); });
 })();
 </script>
-
 </body>
 </html>
